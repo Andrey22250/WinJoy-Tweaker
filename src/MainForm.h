@@ -232,7 +232,7 @@ namespace WinJoytweaker {
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 40)));
-            this->rootLayout->Size = System::Drawing::Size(864, 661);
+            this->rootLayout->Size = System::Drawing::Size(864, 720);
             this->rootLayout->TabIndex = 0;
             // 
             // labelDevice
@@ -749,11 +749,13 @@ namespace WinJoytweaker {
             //
             // panelButtons
             //
-            this->panelButtons->ColumnCount = 2;
-            this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent, 50)));
-            this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent, 50)));
-            this->panelButtons->Controls->Add(this->buttonBackup, 0, 0);
-            this->panelButtons->Controls->Add(this->buttonApply, 1, 0);
+            // 3 колонки: пустой spacer слева (100%) и две фиксированные справа
+            this->panelButtons->ColumnCount = 3;
+            this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent, 100)));
+            this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Absolute, 140)));
+            this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Absolute, 140)));
+            this->panelButtons->Controls->Add(this->buttonBackup, 1, 0);
+            this->panelButtons->Controls->Add(this->buttonApply, 2, 0);
             this->panelButtons->Dock = System::Windows::Forms::DockStyle::Fill;
             this->panelButtons->Margin = System::Windows::Forms::Padding(0, 8, 0, 0);
             this->panelButtons->Name = L"panelButtons";
@@ -763,7 +765,8 @@ namespace WinJoytweaker {
             //
             // buttonBackup
             //
-            this->buttonBackup->Dock = System::Windows::Forms::DockStyle::Fill;
+            this->buttonBackup->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Right);
+            this->buttonBackup->Size = System::Drawing::Size(134, 30);
             this->buttonBackup->Margin = System::Windows::Forms::Padding(0, 0, 6, 0);
             this->buttonBackup->Name = L"buttonBackup";
             this->buttonBackup->TabIndex = 20;
@@ -772,7 +775,8 @@ namespace WinJoytweaker {
             //
             // buttonApply
             //
-            this->buttonApply->Dock = System::Windows::Forms::DockStyle::Fill;
+            this->buttonApply->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Right);
+            this->buttonApply->Size = System::Drawing::Size(134, 30);
             this->buttonApply->Margin = System::Windows::Forms::Padding(6, 0, 0, 0);
             this->buttonApply->Name = L"buttonApply";
             this->buttonApply->TabIndex = 21;
@@ -783,11 +787,11 @@ namespace WinJoytweaker {
             //
             this->AutoScaleDimensions = System::Drawing::SizeF(7, 17);
             this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-            this->ClientSize = System::Drawing::Size(864, 661);
+            this->ClientSize = System::Drawing::Size(864, 720);
             this->Controls->Add(this->rootLayout);
             this->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.5F));
             this->Margin = System::Windows::Forms::Padding(5);
-            this->MinimumSize = System::Drawing::Size(700, 680);
+            this->MinimumSize = System::Drawing::Size(700, 740);
             this->Name = L"MainForm";
             this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
             this->Text = L"WinJoy Tweaker";
