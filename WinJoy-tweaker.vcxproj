@@ -126,22 +126,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MainForm.cpp" />
+    <ClCompile Include="src\MainForm.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="docs\mmddk.h" />
-    <ClInclude Include="MainForm.h">
+    <ClInclude Include="src\MainForm.h">
       <FileType>CppForm</FileType>
     </ClInclude>
-    <ClInclude Include="RegistryEngine.h" />
+    <ClInclude Include="src\RegistryEngine.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Claude.md" />
-    <None Include="docs\PROJECT_STATUS.md" />
-    <None Include="docs\references.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="MainForm.resx">
+    <EmbeddedResource Include="src\MainForm.resx">
       <DependentUpon>MainForm.h</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
