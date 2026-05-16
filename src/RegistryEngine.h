@@ -354,6 +354,40 @@ namespace RegistryEngine {
 
         writeW(L"\r\n");
         CloseHandle(hFile);
+
+        // Ротация: оставляем не более 15 .reg файлов в папке бэкапов.
+        // Собираем все файлы с их временем последней записи, сортируем по возрастанию,
+        // удаляем самые старые, пока файлов не станет <= 15.
+        {
+            constexpr size_t MAX_BACKUPS = 15;
+            std::vector<std::pair<FILETIME, std::wstring>> files; // {время, путь}
+
+            std::wstring pattern = dir + L"\\*.reg";
+            WIN32_FIND_DATAW fd = {};
+            HANDLE hFind = FindFirstFileW(pattern.c_str(), &fd);
+            if (hFind != INVALID_HANDLE_VALUE) {
+                do {
+                    if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+                        files.push_back({ fd.ftLastWriteTime, dir + L"\\" + fd.cFileName });
+                } while (FindNextFileW(hFind, &fd));
+                FindClose(hFind);
+            }
+
+            if (files.size() > MAX_BACKUPS) {
+                // Сортируем по времени: старые — первыми.
+                std::sort(files.begin(), files.end(),
+                    [](const auto& a, const auto& b) {
+                        if (a.first.dwHighDateTime != b.first.dwHighDateTime)
+                            return a.first.dwHighDateTime < b.first.dwHighDateTime;
+                        return a.first.dwLowDateTime < b.first.dwLowDateTime;
+                    });
+                // Удаляем лишние (с начала отсортированного списка).
+                size_t toDelete = files.size() - MAX_BACKUPS;
+                for (size_t i = 0; i < toDelete; ++i)
+                    DeleteFileW(files[i].second.c_str());
+            }
+        }
+
         return filePath;
     }
 

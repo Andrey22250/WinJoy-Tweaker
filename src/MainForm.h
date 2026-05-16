@@ -98,6 +98,7 @@ namespace WinJoytweaker {
         System::Windows::Forms::TableLayoutPanel^  panelButtons;
         System::Windows::Forms::Button^            buttonApply;
         System::Windows::Forms::Button^            buttonBackup;
+        System::Windows::Forms::Button^            buttonOpenBackups;
 
         // Снимок оригинальных байт OEMData — основа для предпросмотра изменений.
         array<System::Byte>^                       _oemDataSnapshot;
@@ -113,6 +114,7 @@ namespace WinJoytweaker {
         void textBoxOemName_KeyPress(System::Object^ sender, System::Windows::Forms::KeyPressEventArgs^ e);
         void buttonApply_Click(System::Object^ sender, System::EventArgs^ e);
         void buttonBackup_Click(System::Object^ sender, System::EventArgs^ e);
+        void buttonOpenBackups_Click(System::Object^ sender, System::EventArgs^ e);
         void buttonRefresh_Click(System::Object^ sender, System::EventArgs^ e);
         void comboBoxDevice_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e);
         void refreshDebounceTimer_Tick(System::Object^ sender, System::EventArgs^ e);
@@ -186,6 +188,7 @@ namespace WinJoytweaker {
             this->panelButtons = (gcnew System::Windows::Forms::TableLayoutPanel());
             this->buttonApply = (gcnew System::Windows::Forms::Button());
             this->buttonBackup = (gcnew System::Windows::Forms::Button());
+            this->buttonOpenBackups = (gcnew System::Windows::Forms::Button());
             this->rootLayout->SuspendLayout();
             this->panelButtons->SuspendLayout();
             this->groupBoxFlags->SuspendLayout();
@@ -749,13 +752,15 @@ namespace WinJoytweaker {
             //
             // panelButtons
             //
-            // 3 колонки: пустой spacer слева (100%) и две фиксированные справа
-            this->panelButtons->ColumnCount = 3;
+            // 4 колонки: spacer (100%), открыть папку, бэкап, применить
+            this->panelButtons->ColumnCount = 4;
             this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent, 100)));
             this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Absolute, 140)));
             this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Absolute, 140)));
-            this->panelButtons->Controls->Add(this->buttonBackup, 1, 0);
-            this->panelButtons->Controls->Add(this->buttonApply, 2, 0);
+            this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Absolute, 140)));
+            this->panelButtons->Controls->Add(this->buttonOpenBackups, 1, 0);
+            this->panelButtons->Controls->Add(this->buttonBackup, 2, 0);
+            this->panelButtons->Controls->Add(this->buttonApply, 3, 0);
             this->panelButtons->Dock = System::Windows::Forms::DockStyle::Fill;
             this->panelButtons->Margin = System::Windows::Forms::Padding(0, 8, 0, 0);
             this->panelButtons->Name = L"panelButtons";
@@ -782,6 +787,16 @@ namespace WinJoytweaker {
             this->buttonApply->TabIndex = 21;
             this->buttonApply->Text = L"Применить";
             this->buttonApply->Click += gcnew System::EventHandler(this, &MainForm::buttonApply_Click);
+            //
+            // buttonOpenBackups
+            //
+            this->buttonOpenBackups->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Right);
+            this->buttonOpenBackups->Size = System::Drawing::Size(134, 30);
+            this->buttonOpenBackups->Margin = System::Windows::Forms::Padding(0, 0, 6, 0);
+            this->buttonOpenBackups->Name = L"buttonOpenBackups";
+            this->buttonOpenBackups->TabIndex = 22;
+            this->buttonOpenBackups->Text = L"Папка бэкапов";
+            this->buttonOpenBackups->Click += gcnew System::EventHandler(this, &MainForm::buttonOpenBackups_Click);
             //
             // MainForm
             //

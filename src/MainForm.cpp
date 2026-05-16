@@ -2,6 +2,8 @@
 #include "RegistryEngine.h"
 #include <msclr/marshal.h>
 #include <msclr/marshal_cppstd.h>
+#include <shellapi.h>
+#pragma comment(lib, "Shell32.lib")
 
 using namespace WinJoytweaker;
 using namespace System;
@@ -60,6 +62,13 @@ void MainForm::ApplyDarkTheme()
     buttonRefresh->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 122, 204);
 
     panelButtons->BackColor = bgDark;
+
+    buttonOpenBackups->BackColor = bgPanel;
+    buttonOpenBackups->ForeColor = textOn;
+    buttonOpenBackups->FlatStyle = FlatStyle::Flat;
+    buttonOpenBackups->FlatAppearance->BorderColor        = border;
+    buttonOpenBackups->FlatAppearance->MouseOverBackColor = Color::FromArgb(62, 62, 64);
+    buttonOpenBackups->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 122, 204);
 
     buttonBackup->BackColor = bgPanel;
     buttonBackup->ForeColor = textOn;
@@ -540,6 +549,23 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
     LoadDeviceData();
 
     labelStatus->Text = L"Применено. Бэкап: " + gcnew String(backupPath.c_str());
+}
+
+// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
+// Кнопка «Папка бэкапов» — открывает папку в Проводнике
+// -----------------------------------------------------------------------
+void MainForm::buttonOpenBackups_Click(System::Object^ sender, System::EventArgs^ e)
+{
+    std::wstring dir = RegistryEngine::EnsureBackupDir();
+    if (dir.empty()) {
+        labelStatus->Text = L"Не удалось создать папку бэкапов.";
+        return;
+    }
+    // ShellExecute открывает папку в Проводнике без запроса UAC.
+    HINSTANCE result = ShellExecuteW(nullptr, L"explore", dir.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    if (reinterpret_cast<INT_PTR>(result) <= 32)
+        labelStatus->Text = L"Не удалось открыть папку бэкапов.";
 }
 
 // -----------------------------------------------------------------------
