@@ -729,7 +729,14 @@ namespace WinJoytweaker {
             // textBoxRawData
             // 
             this->rootLayout->SetColumnSpan(this->textBoxRawData, 2);
-            this->textBoxRawData->Dock = System::Windows::Forms::DockStyle::Fill;
+            // Anchor (а не Dock=Fill): высота TextBox'а одностроковая и
+            // определяется шрифтом — Dock=Fill в AutoSize-строке при
+            // WM_DPICHANGED давал нестабильный preferred-height, поле визуально
+            // сжималось при переносе на монитор с другим масштабом.
+            this->textBoxRawData->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(
+                System::Windows::Forms::AnchorStyles::Top |
+                System::Windows::Forms::AnchorStyles::Left |
+                System::Windows::Forms::AnchorStyles::Right);
             this->textBoxRawData->Font = (gcnew System::Drawing::Font(L"Consolas", 10));
             this->textBoxRawData->Location = System::Drawing::Point(211, 483);
             this->textBoxRawData->Margin = System::Windows::Forms::Padding(0, 12, 0, 3);
@@ -751,7 +758,10 @@ namespace WinJoytweaker {
             // textBoxPreviewData
             // 
             this->rootLayout->SetColumnSpan(this->textBoxPreviewData, 2);
-            this->textBoxPreviewData->Dock = System::Windows::Forms::DockStyle::Fill;
+            this->textBoxPreviewData->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(
+                System::Windows::Forms::AnchorStyles::Top |
+                System::Windows::Forms::AnchorStyles::Left |
+                System::Windows::Forms::AnchorStyles::Right);
             this->textBoxPreviewData->Font = (gcnew System::Drawing::Font(L"Consolas", 10));
             this->textBoxPreviewData->Location = System::Drawing::Point(211, 514);
             this->textBoxPreviewData->Margin = System::Windows::Forms::Padding(0, 5, 0, 3);
@@ -850,8 +860,13 @@ namespace WinJoytweaker {
             //
             // MainForm
             //
-            this->AutoScaleDimensions = System::Drawing::SizeF(7, 17);
-            this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
+            // Для корректной работы PerMonitorV2 используем AutoScaleMode::Dpi —
+            // прямое масштабирование по соотношению DPI без дополнительного
+            // пересчёта через размеры шрифта. Базовое значение 96×96 = 100%.
+            // При AutoScaleMode::Font шрифты при переносе окна между мониторами
+            // с разным масштабом получали «двойной» пересчёт и ломались.
+            this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
+            this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Dpi;
             this->ClientSize = System::Drawing::Size(864, 756);
             this->Controls->Add(this->rootLayout);
             this->Controls->Add(this->comboBoxLanguage);

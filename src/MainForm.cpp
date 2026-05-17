@@ -189,6 +189,11 @@ void MainForm::comboBoxLanguage_SelectedIndexChanged(System::Object^ sender, Sys
     Localization::SavePreference(pref);
     Localization::ApplyPreference(pref);
     ApplyLocalization();
+    // labelStatus («Подключено устройств: N» / «Устройств не найдено» / ошибки
+    // сканирования) формируется в RefreshDeviceList и не охватывается
+    // ApplyLocalization. Перевызываем сканирование, чтобы статус тоже
+    // перевёлся на новый язык.
+    RefreshDeviceList();
 }
 
 // -----------------------------------------------------------------------
