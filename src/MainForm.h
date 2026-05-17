@@ -1,5 +1,7 @@
 #pragma once
 
+#include "locales/Localization.h"  // Используется в конструкторе и ApplyLocalization
+
 // Forward-declare native-структуры из RegistryEngine.h, чтобы не тащить весь
 // заголовок (включая Windows.h/dinput.h) в этот хедер.
 struct DeviceData;
@@ -22,6 +24,17 @@ namespace WinJoytweaker {
         MainForm(void)
         {
             InitializeComponent();
+
+            // Заполняем переключатель языка и выставляем сохранённое значение
+            // ДО подписки на handler, чтобы инициализация не триггерила его.
+            comboBoxLanguage->Items->Add(L"Auto / Авто");
+            comboBoxLanguage->Items->Add(L"Русский");
+            comboBoxLanguage->Items->Add(L"English");
+            comboBoxLanguage->SelectedIndex = (int)Localization::LoadPreference();
+            comboBoxLanguage->SelectedIndexChanged += gcnew System::EventHandler(
+                this, &MainForm::comboBoxLanguage_SelectedIndexChanged);
+
+            ApplyLocalization();
             ApplyDarkTheme();
             RefreshDeviceList();
         }
@@ -99,11 +112,16 @@ namespace WinJoytweaker {
         System::Windows::Forms::Button^            buttonApply;
         System::Windows::Forms::Button^            buttonBackup;
         System::Windows::Forms::Button^            buttonOpenBackups;
+        System::Windows::Forms::Button^            buttonRestore;
+
+        // Переключатель языка интерфейса (Auto / Русский / English).
+        System::Windows::Forms::ComboBox^          comboBoxLanguage;
 
         // Снимок оригинальных байт OEMData — основа для предпросмотра изменений.
         array<System::Byte>^                       _oemDataSnapshot;
 
         void ApplyDarkTheme();
+        void ApplyLocalization();
         void RefreshDeviceList();
         void LoadDeviceData();
         void ClearFlagControls();
@@ -115,8 +133,10 @@ namespace WinJoytweaker {
         void buttonApply_Click(System::Object^ sender, System::EventArgs^ e);
         void buttonBackup_Click(System::Object^ sender, System::EventArgs^ e);
         void buttonOpenBackups_Click(System::Object^ sender, System::EventArgs^ e);
+        void buttonRestore_Click(System::Object^ sender, System::EventArgs^ e);
         void buttonRefresh_Click(System::Object^ sender, System::EventArgs^ e);
         void comboBoxDevice_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e);
+        void comboBoxLanguage_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e);
         void refreshDebounceTimer_Tick(System::Object^ sender, System::EventArgs^ e);
 
     protected:
@@ -189,6 +209,8 @@ namespace WinJoytweaker {
             this->buttonApply = (gcnew System::Windows::Forms::Button());
             this->buttonBackup = (gcnew System::Windows::Forms::Button());
             this->buttonOpenBackups = (gcnew System::Windows::Forms::Button());
+            this->buttonRestore = (gcnew System::Windows::Forms::Button());
+            this->comboBoxLanguage = (gcnew System::Windows::Forms::ComboBox());
             this->rootLayout->SuspendLayout();
             this->panelButtons->SuspendLayout();
             this->groupBoxFlags->SuspendLayout();
@@ -222,7 +244,10 @@ namespace WinJoytweaker {
             this->rootLayout->Location = System::Drawing::Point(0, 0);
             this->rootLayout->Margin = System::Windows::Forms::Padding(0);
             this->rootLayout->Name = L"rootLayout";
-            this->rootLayout->Padding = System::Windows::Forms::Padding(19, 20, 19, 20);
+            // Верхний отступ увеличен (36 вместо 20), чтобы под combobox-ом
+            // переключателя языка, плавающим в правом верхнем углу, оставалось
+            // место для labelDevice.
+            this->rootLayout->Padding = System::Windows::Forms::Padding(19, 36, 19, 20);
             this->rootLayout->RowCount = 11;
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 26)));
@@ -234,8 +259,8 @@ namespace WinJoytweaker {
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
-            this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 40)));
-            this->rootLayout->Size = System::Drawing::Size(864, 720);
+            this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 76)));
+            this->rootLayout->Size = System::Drawing::Size(864, 756);
             this->rootLayout->TabIndex = 0;
             // 
             // labelDevice
@@ -752,27 +777,30 @@ namespace WinJoytweaker {
             //
             // panelButtons
             //
-            // 4 колонки: spacer (100%), открыть папку, бэкап, применить
-            this->panelButtons->ColumnCount = 4;
+            // 3 колонки × 2 ряда: spacer (100%) | левая кнопка | правая кнопка.
+            // row 0: «Папка бэкапов» | «Сделать бэкап»
+            // row 1: «Восстановить»  | «Применить»
+            this->panelButtons->ColumnCount = 3;
             this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent, 100)));
-            this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Absolute, 140)));
             this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Absolute, 140)));
             this->panelButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Absolute, 140)));
             this->panelButtons->Controls->Add(this->buttonOpenBackups, 1, 0);
             this->panelButtons->Controls->Add(this->buttonBackup, 2, 0);
-            this->panelButtons->Controls->Add(this->buttonApply, 3, 0);
+            this->panelButtons->Controls->Add(this->buttonRestore, 1, 1);
+            this->panelButtons->Controls->Add(this->buttonApply, 2, 1);
             this->panelButtons->Dock = System::Windows::Forms::DockStyle::Fill;
             this->panelButtons->Margin = System::Windows::Forms::Padding(0, 8, 0, 0);
             this->panelButtons->Name = L"panelButtons";
-            this->panelButtons->RowCount = 1;
-            this->panelButtons->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Percent, 100)));
+            this->panelButtons->RowCount = 2;
+            this->panelButtons->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 34)));
+            this->panelButtons->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 34)));
             this->rootLayout->SetColumnSpan(this->panelButtons, 3);
             //
             // buttonBackup
             //
-            this->buttonBackup->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Right);
+            this->buttonBackup->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(System::Windows::Forms::AnchorStyles::Top|(System::Windows::Forms::AnchorStyles::Right));
             this->buttonBackup->Size = System::Drawing::Size(134, 30);
-            this->buttonBackup->Margin = System::Windows::Forms::Padding(0, 0, 6, 0);
+            this->buttonBackup->Margin = System::Windows::Forms::Padding(6, 0, 0, 0);
             this->buttonBackup->Name = L"buttonBackup";
             this->buttonBackup->TabIndex = 20;
             this->buttonBackup->Text = L"Сделать бэкап";
@@ -798,15 +826,44 @@ namespace WinJoytweaker {
             this->buttonOpenBackups->Text = L"Папка бэкапов";
             this->buttonOpenBackups->Click += gcnew System::EventHandler(this, &MainForm::buttonOpenBackups_Click);
             //
+            // buttonRestore
+            //
+            this->buttonRestore->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Right);
+            this->buttonRestore->Size = System::Drawing::Size(134, 30);
+            this->buttonRestore->Margin = System::Windows::Forms::Padding(0, 0, 6, 0);
+            this->buttonRestore->Name = L"buttonRestore";
+            this->buttonRestore->TabIndex = 23;
+            this->buttonRestore->Text = L"Восстановить";
+            this->buttonRestore->Click += gcnew System::EventHandler(this, &MainForm::buttonRestore_Click);
+            //
+            // comboBoxLanguage — переключатель языка, плавает в правом
+            // верхнем углу формы (поверх rootLayout, не в его сетке).
+            // Items и SelectedIndex выставляются вручную в конструкторе
+            // ПОСЛЕ InitializeComponent, чтобы не триггерить хендлер.
+            //
+            this->comboBoxLanguage->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
+            this->comboBoxLanguage->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->comboBoxLanguage->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Right);
+            this->comboBoxLanguage->Size = System::Drawing::Size(150, 25);
+            this->comboBoxLanguage->Name = L"comboBoxLanguage";
+            this->comboBoxLanguage->TabIndex = 30;
+            //
             // MainForm
             //
             this->AutoScaleDimensions = System::Drawing::SizeF(7, 17);
             this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-            this->ClientSize = System::Drawing::Size(864, 720);
+            this->ClientSize = System::Drawing::Size(864, 756);
             this->Controls->Add(this->rootLayout);
+            this->Controls->Add(this->comboBoxLanguage);
+            // Поднимаем combobox над rootLayout (Add() помещает в конец Controls,
+            // что в WinForms означает нижний z-order — BringToFront выводит вперёд).
+            this->comboBoxLanguage->BringToFront();
+            // Позиционируем уже после добавления, когда ClientSize известен.
+            this->comboBoxLanguage->Location = System::Drawing::Point(
+                this->ClientSize.Width - this->comboBoxLanguage->Width - 19, 6);
             this->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.5F));
             this->Margin = System::Windows::Forms::Padding(5);
-            this->MinimumSize = System::Drawing::Size(700, 740);
+            this->MinimumSize = System::Drawing::Size(700, 776);
             this->Name = L"MainForm";
             this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
             this->Text = L"WinJoy Tweaker";

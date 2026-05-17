@@ -4,10 +4,22 @@
     <Filter Include="src">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\locales">
+      <UniqueIdentifier>{8B2A9F3C-1D4E-4A7B-9C5D-2E6F7A8B1C9D}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\MainForm.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RegistryEngine.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BackupManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\locales\Localization.cpp">
+      <Filter>src\locales</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -17,10 +29,27 @@
     <ClInclude Include="src\RegistryEngine.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\BackupManager.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\locales\Localization.h">
+      <Filter>src\locales</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="src\app.manifest">
+      <Filter>src</Filter>
+    </Manifest>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="src\MainForm.resx">
       <Filter>src</Filter>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\locales\Strings.resx">
+      <Filter>src\locales</Filter>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\locales\Strings_en.resx">
+      <Filter>src\locales</Filter>
     </EmbeddedResource>
   </ItemGroup>
 </Project>

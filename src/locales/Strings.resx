@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Заголовок и метки формы -->
+  <data name="form.title" xml:space="preserve"><value>WinJoy Tweaker</value></data>
+  <data name="label.device" xml:space="preserve"><value>Устройство:</value></data>
+  <data name="label.oemNameCaption" xml:space="preserve"><value>Название устройства (OEMName):</value></data>
+  <data name="label.oemDataCaption" xml:space="preserve"><value>Параметры устройства (OEMData):</value></data>
+  <data name="label.dwNumButtons" xml:space="preserve"><value>Кнопок (hws.dwNumButtons):</value></data>
+  <data name="label.flagsGroup" xml:space="preserve"><value>Параметры (hws.dwFlags)</value></data>
+  <data name="label.deviceType" xml:space="preserve"><value>Тип устройства</value></data>
+  <data name="label.axes" xml:space="preserve"><value>Доступные оси</value></data>
+  <data name="label.xAxis" xml:space="preserve"><value>Ось X</value></data>
+  <data name="label.yAxis" xml:space="preserve"><value>Ось Y</value></data>
+  <data name="label.rawData" xml:space="preserve"><value>Сырые байты OEMData:</value></data>
+  <data name="label.previewData" xml:space="preserve"><value>После изменений:</value></data>
+
+  <!-- Кнопки -->
+  <data name="button.refresh" xml:space="preserve"><value>Обновить</value></data>
+  <data name="button.apply" xml:space="preserve"><value>Применить</value></data>
+  <data name="button.backup" xml:space="preserve"><value>Сделать бэкап</value></data>
+  <data name="button.openBackups" xml:space="preserve"><value>Папка бэкапов</value></data>
+  <data name="button.restore" xml:space="preserve"><value>Восстановить</value></data>
+
+  <!-- Тип устройства -->
+  <data name="device.generic" xml:space="preserve"><value>Обычный джойстик</value></data>
+  <data name="device.yoke" xml:space="preserve"><value>Штурвал (Yoke)</value></data>
+  <data name="device.gamepad" xml:space="preserve"><value>Геймпад</value></data>
+  <data name="device.wheel" xml:space="preserve"><value>Руль / Car controller</value></data>
+
+  <!-- Оси -->
+  <data name="axis.z" xml:space="preserve"><value>Z (третья ось)</value></data>
+  <data name="axis.r" xml:space="preserve"><value>R (Rudder, 4-я ось)</value></data>
+  <data name="axis.u" xml:space="preserve"><value>U (5-я ось)</value></data>
+  <data name="axis.v" xml:space="preserve"><value>V (6-я ось)</value></data>
+
+  <!-- POV -->
+  <data name="pov.label" xml:space="preserve"><value>POV (шляпа)</value></data>
+  <data name="pov.buttonCombos" xml:space="preserve"><value>└ комбинация кнопок</value></data>
+  <data name="pov.poll" xml:space="preserve"><value>└ опрос драйвером</value></data>
+
+  <!-- Маппинг X -->
+  <data name="xAxis.default" xml:space="preserve"><value>J1 X (по умолч.)</value></data>
+  <data name="xAxis.j1y" xml:space="preserve"><value>J1 Y</value></data>
+  <data name="xAxis.j2x" xml:space="preserve"><value>J2 X</value></data>
+  <data name="xAxis.j2y" xml:space="preserve"><value>J2 Y</value></data>
+
+  <!-- Маппинг Y -->
+  <data name="yAxis.default" xml:space="preserve"><value>J1 Y (по умолч.)</value></data>
+  <data name="yAxis.j1x" xml:space="preserve"><value>J1 X</value></data>
+  <data name="yAxis.j2x" xml:space="preserve"><value>J2 X</value></data>
+  <data name="yAxis.j2y" xml:space="preserve"><value>J2 Y</value></data>
+
+  <!-- Статусные сообщения -->
+  <data name="status.devicesConnected" xml:space="preserve"><value>Подключено устройств: {0}</value></data>
+  <data name="status.noDevices" xml:space="preserve"><value>Подключённые контроллеры не обнаружены.</value></data>
+  <data name="status.scanError" xml:space="preserve"><value>Ошибка сканирования: {0}</value></data>
+  <data name="status.scanInternalError" xml:space="preserve"><value>Ошибка сканирования: внутренний сбой при опросе устройств.</value></data>
+  <data name="status.noSelection" xml:space="preserve"><value>Нет выбранного устройства.</value></data>
+  <data name="status.oemDataMissingBackup" xml:space="preserve"><value>OEMData не найден — бэкап невозможен.</value></data>
+  <data name="status.backupFailed" xml:space="preserve"><value>Ошибка: не удалось создать файл бэкапа.</value></data>
+  <data name="status.backupSaved" xml:space="preserve"><value>Бэкап сохранён: {0}</value></data>
+  <data name="status.oemDataMissingApply" xml:space="preserve"><value>OEMData не найден — применение отменено.</value></data>
+  <data name="status.backupBeforeApplyFailed" xml:space="preserve"><value>Ошибка: не удалось создать бэкап. Изменения не записаны.</value></data>
+  <data name="status.noDataToWrite" xml:space="preserve"><value>Нет данных для записи.</value></data>
+  <data name="status.previewParseError" xml:space="preserve"><value>Ошибка разбора данных предпросмотра.</value></data>
+  <data name="status.writeOemDataError" xml:space="preserve"><value>Ошибка записи OEMData (код: {0}).</value></data>
+  <data name="status.writeOemNameAfterDataError" xml:space="preserve"><value>OEMData записан. Ошибка записи OEMName (код: {0}).</value></data>
+  <data name="status.applied" xml:space="preserve"><value>Применено. Бэкап: {0}</value></data>
+  <data name="status.backupDirFailed" xml:space="preserve"><value>Не удалось создать папку бэкапов.</value></data>
+  <data name="status.openBackupsFailed" xml:space="preserve"><value>Не удалось открыть папку бэкапов.</value></data>
+
+  <!-- Восстановление -->
+  <data name="restore.fileDialogTitle" xml:space="preserve"><value>Выберите файл бэкапа (.reg)</value></data>
+  <data name="restore.fileFilter" xml:space="preserve"><value>Файлы реестра (*.reg)|*.reg|Все файлы (*.*)|*.*</value></data>
+  <data name="restore.parseError" xml:space="preserve"><value>Не удалось разобрать файл: {0}</value></data>
+  <data name="restore.confirmTitle" xml:space="preserve"><value>Восстановление из бэкапа</value></data>
+  <data name="restore.confirmText" xml:space="preserve"><value>Восстановить значения из файла во ВЫБРАННОЕ устройство?
+
+Имя из бэкапа: {0}
+Байты OEMData: {1}</value></data>
+  <data name="restore.writeOemNameError" xml:space="preserve"><value>OEMData восстановлен. Ошибка записи OEMName (код: {0}).</value></data>
+  <data name="restore.success" xml:space="preserve"><value>Восстановлено из файла: {0}</value></data>
+
+  <!-- Ошибки из нативных модулей -->
+  <data name="error.openRegistryKey" xml:space="preserve"><value>Не удалось открыть ключ реестра (код: {0})</value></data>
+  <data name="error.backupOpenFile" xml:space="preserve"><value>Не удалось открыть файл бэкапа.</value></data>
+  <data name="error.backupInvalidSize" xml:space="preserve"><value>Некорректный размер .reg-файла.</value></data>
+  <data name="error.backupReadFile" xml:space="preserve"><value>Ошибка чтения файла.</value></data>
+  <data name="error.backupNoOemData" xml:space="preserve"><value>В файле не найдены данные OEMData.</value></data>
+
+  <!-- Прочее -->
+  <data name="common.noDataPlaceholder" xml:space="preserve"><value>—</value></data>
+</root>

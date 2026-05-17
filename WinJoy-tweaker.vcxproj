@@ -83,6 +83,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <CLRThreadAttribute>STAThreadingAttribute</CLRThreadAttribute>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -94,6 +95,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <CLRThreadAttribute>STAThreadingAttribute</CLRThreadAttribute>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -105,6 +107,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <CLRThreadAttribute>STAThreadingAttribute</CLRThreadAttribute>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -116,6 +119,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <CLRThreadAttribute>STAThreadingAttribute</CLRThreadAttribute>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -126,18 +130,34 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\MainForm.cpp" />
+    <Manifest Include="src\app.manifest" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\MainForm.cpp" />
+    <ClCompile Include="src\RegistryEngine.cpp" />
+    <ClCompile Include="src\BackupManager.cpp" />
+    <ClCompile Include="src\locales\Localization.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="docs\mmddk.h" />
     <ClInclude Include="src\MainForm.h">
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="src\RegistryEngine.h" />
+    <ClInclude Include="src\BackupManager.h" />
+    <ClInclude Include="src\locales\Localization.h" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="src\MainForm.resx">
       <DependentUpon>MainForm.h</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="src\locales\Strings.resx" />
+    <EmbeddedResource Include="src\locales\Strings_en.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CLAUDE.md" />
+    <None Include="docs\PROJECT_STATUS.md" />
+    <None Include="docs\references.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

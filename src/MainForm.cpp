@@ -1,5 +1,6 @@
 #include "MainForm.h"
 #include "RegistryEngine.h"
+#include "BackupManager.h"
 #include <msclr/marshal.h>
 #include <msclr/marshal_cppstd.h>
 #include <shellapi.h>
@@ -77,6 +78,13 @@ void MainForm::ApplyDarkTheme()
     buttonBackup->FlatAppearance->MouseOverBackColor = Color::FromArgb(62, 62, 64);
     buttonBackup->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 122, 204);
 
+    buttonRestore->BackColor = bgPanel;
+    buttonRestore->ForeColor = textOn;
+    buttonRestore->FlatStyle = FlatStyle::Flat;
+    buttonRestore->FlatAppearance->BorderColor        = border;
+    buttonRestore->FlatAppearance->MouseOverBackColor = Color::FromArgb(62, 62, 64);
+    buttonRestore->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 122, 204);
+
     // «Применить» — акцентная синяя заливка для различимости
     buttonApply->BackColor = Color::FromArgb(0, 99, 177);
     buttonApply->ForeColor = textOn;
@@ -118,6 +126,69 @@ void MainForm::ApplyDarkTheme()
     panelYAxis->BackColor = bgDark;
     labelXAxisHeader->ForeColor = textOn;
     labelYAxisHeader->ForeColor = textOn;
+
+    comboBoxLanguage->BackColor = bgPanel;
+    comboBoxLanguage->ForeColor = textOn;
+}
+
+// -----------------------------------------------------------------------
+// Применение локализованных текстов ко всем UI-элементам.
+// Вызывается в конструкторе и после переключения языка.
+// -----------------------------------------------------------------------
+void MainForm::ApplyLocalization()
+{
+    this->Text = Localization::T(L"form.title");
+
+    labelDevice->Text         = Localization::T(L"label.device");
+    buttonRefresh->Text       = Localization::T(L"button.refresh");
+    labelOemNameCaption->Text = Localization::T(L"label.oemNameCaption");
+    labelOemDataCaption->Text = Localization::T(L"label.oemDataCaption");
+    labelDwNumButtons->Text   = Localization::T(L"label.dwNumButtons");
+    groupBoxFlags->Text       = Localization::T(L"label.flagsGroup");
+    labelDeviceTypeHeader->Text = Localization::T(L"label.deviceType");
+    labelAxesHeader->Text     = Localization::T(L"label.axes");
+    labelXAxisHeader->Text    = Localization::T(L"label.xAxis");
+    labelYAxisHeader->Text    = Localization::T(L"label.yAxis");
+    labelRawData->Text        = Localization::T(L"label.rawData");
+    labelPreviewData->Text    = Localization::T(L"label.previewData");
+
+    radioGeneric->Text  = Localization::T(L"device.generic");
+    radioYoke->Text     = Localization::T(L"device.yoke");
+    radioGamepad->Text  = Localization::T(L"device.gamepad");
+    radioWheel->Text    = Localization::T(L"device.wheel");
+
+    checkHasZ->Text                = Localization::T(L"axis.z");
+    checkHasR->Text                = Localization::T(L"axis.r");
+    checkHasU->Text                = Localization::T(L"axis.u");
+    checkHasV->Text                = Localization::T(L"axis.v");
+    checkHasPov->Text              = Localization::T(L"pov.label");
+    checkPovIsButtonCombos->Text   = Localization::T(L"pov.buttonCombos");
+    checkPovIsPoll->Text           = Localization::T(L"pov.poll");
+
+    radioXDefault->Text = Localization::T(L"xAxis.default");
+    radioXJ1Y->Text     = Localization::T(L"xAxis.j1y");
+    radioXJ2X->Text     = Localization::T(L"xAxis.j2x");
+    radioXJ2Y->Text     = Localization::T(L"xAxis.j2y");
+
+    radioYDefault->Text = Localization::T(L"yAxis.default");
+    radioYJ1X->Text     = Localization::T(L"yAxis.j1x");
+    radioYJ2X->Text     = Localization::T(L"yAxis.j2x");
+    radioYJ2Y->Text     = Localization::T(L"yAxis.j2y");
+
+    buttonBackup->Text      = Localization::T(L"button.backup");
+    buttonApply->Text       = Localization::T(L"button.apply");
+    buttonOpenBackups->Text = Localization::T(L"button.openBackups");
+    buttonRestore->Text     = Localization::T(L"button.restore");
+}
+
+// Смена языка из combobox-а: сохраняем в settings.ini, применяем культуру,
+// перезагружаем словарь строк, переименовываем все контролы. Перезапуск не нужен.
+void MainForm::comboBoxLanguage_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e)
+{
+    Localization::Language pref = (Localization::Language)comboBoxLanguage->SelectedIndex;
+    Localization::SavePreference(pref);
+    Localization::ApplyPreference(pref);
+    ApplyLocalization();
 }
 
 // -----------------------------------------------------------------------
@@ -140,18 +211,18 @@ void MainForm::RefreshDeviceList()
         if (!devices.empty()) {
             comboBoxDevice->SelectedIndex = 0;
             // LoadDeviceData() вызовется автоматически через SelectedIndexChanged
-            labelStatus->Text = String::Format(L"Подключено устройств: {0}", (int)devices.size());
+            labelStatus->Text = Localization::T(L"status.devicesConnected", (int)devices.size());
         } else {
             textBoxOemName->Text = String::Empty;
             ClearFlagControls();
-            labelStatus->Text = L"Подключённые контроллеры не обнаружены.";
+            labelStatus->Text = Localization::T(L"status.noDevices");
         }
     }
     catch (System::Exception^ ex) {
-        labelStatus->Text = String::Format(L"Ошибка сканирования: {0}", ex->Message);
+        labelStatus->Text = Localization::T(L"status.scanError", ex->Message);
     }
     catch (...) {
-        labelStatus->Text = L"Ошибка сканирования: внутренний сбой при опросе устройств.";
+        labelStatus->Text = Localization::T(L"status.scanInternalError");
     }
     finally {
         comboBoxDevice->EndUpdate();
@@ -238,7 +309,7 @@ void MainForm::LoadDeviceData()
         CopyMemory(&numButtons, &data.oemDataRaw[4], sizeof(DWORD));
         textBoxDwNumButtons->Text = String::Format(L"{0}", numButtons);
     } else {
-        textBoxDwNumButtons->Text = L"—";
+        textBoxDwNumButtons->Text = Localization::T(L"common.noDataPlaceholder");
     }
 
     // Сырые байты — хекс-строка вида "43 00 80 11 10 00 00 00"
@@ -452,27 +523,27 @@ void MainForm::textBoxOemName_KeyPress(System::Object^ sender, System::Windows::
 void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
-    if (sel == nullptr) { labelStatus->Text = L"Нет выбранного устройства."; return; }
+    if (sel == nullptr) { labelStatus->Text = Localization::T(L"status.noSelection"); return; }
     msclr::interop::marshal_context ctx;
     std::wstring oemKey = ctx.marshal_as<std::wstring>(sel->RegistryKey);
     if (oemKey.empty()) {
-        labelStatus->Text = L"Нет выбранного устройства.";
+        labelStatus->Text = Localization::T(L"status.noSelection");
         return;
     }
 
     DeviceData data = RegistryEngine::ReadDeviceData(oemKey);
     if (!data.hasOemData) {
-        labelStatus->Text = L"OEMData не найден — бэкап невозможен.";
+        labelStatus->Text = Localization::T(L"status.oemDataMissingBackup");
         return;
     }
 
-    std::wstring backupPath = RegistryEngine::WriteBackup(oemKey, data.oemName, data.oemDataRaw);
+    std::wstring backupPath = BackupManager::WriteBackup(oemKey, data.oemName, data.oemDataRaw);
     if (backupPath.empty()) {
-        labelStatus->Text = L"Ошибка: не удалось создать файл бэкапа.";
+        labelStatus->Text = Localization::T(L"status.backupFailed");
         return;
     }
 
-    labelStatus->Text = L"Бэкап сохранён: " + gcnew String(backupPath.c_str());
+    labelStatus->Text = Localization::T(L"status.backupSaved", gcnew String(backupPath.c_str()));
 }
 
 // -----------------------------------------------------------------------
@@ -481,27 +552,27 @@ void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
 void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
-    if (sel == nullptr) { labelStatus->Text = L"Нет выбранного устройства."; return; }
+    if (sel == nullptr) { labelStatus->Text = Localization::T(L"status.noSelection"); return; }
     msclr::interop::marshal_context ctxKey;
     std::wstring oemKey = ctxKey.marshal_as<std::wstring>(sel->RegistryKey);
 
     // Читаем текущее состояние реестра для бэкапа (до изменений).
     DeviceData current = RegistryEngine::ReadDeviceData(oemKey);
     if (!current.hasOemData) {
-        labelStatus->Text = L"OEMData не найден — применение отменено.";
+        labelStatus->Text = Localization::T(L"status.oemDataMissingApply");
         return;
     }
 
     // Автоматический тихий бэкап перед любой записью.
-    std::wstring backupPath = RegistryEngine::WriteBackup(oemKey, current.oemName, current.oemDataRaw);
+    std::wstring backupPath = BackupManager::WriteBackup(oemKey, current.oemName, current.oemDataRaw);
     if (backupPath.empty()) {
-        labelStatus->Text = L"Ошибка: не удалось создать бэкап. Изменения не записаны.";
+        labelStatus->Text = Localization::T(L"status.backupBeforeApplyFailed");
         return;
     }
 
     // Собираем новые байты из предпросмотра (они уже отражают текущий UI).
     if (textBoxPreviewData->Text->Length == 0) {
-        labelStatus->Text = L"Нет данных для записи.";
+        labelStatus->Text = Localization::T(L"status.noDataToWrite");
         return;
     }
 
@@ -516,20 +587,20 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
         try {
             newBytes.push_back(static_cast<BYTE>(Convert::ToByte(tok, 16)));
         } catch (...) {
-            labelStatus->Text = L"Ошибка разбора данных предпросмотра.";
+            labelStatus->Text = Localization::T(L"status.previewParseError");
             return;
         }
     }
 
     if (newBytes.empty()) {
-        labelStatus->Text = L"Нет данных для записи.";
+        labelStatus->Text = Localization::T(L"status.noDataToWrite");
         return;
     }
 
     // Записываем OEMData.
     LSTATUS st = RegistryEngine::WriteDeviceData(oemKey, newBytes);
     if (st != ERROR_SUCCESS) {
-        labelStatus->Text = L"Ошибка записи OEMData (код: " + st.ToString() + L").";
+        labelStatus->Text = Localization::T(L"status.writeOemDataError", st);
         return;
     }
 
@@ -540,7 +611,7 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
         std::wstring wName = ctxName.marshal_as<std::wstring>(newName);
         st = RegistryEngine::WriteOemName(oemKey, wName);
         if (st != ERROR_SUCCESS) {
-            labelStatus->Text = L"OEMData записан. Ошибка записи OEMName (код: " + st.ToString() + L").";
+            labelStatus->Text = Localization::T(L"status.writeOemNameAfterDataError", st);
             return;
         }
     }
@@ -548,7 +619,7 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
     // Перечитываем устройство, чтобы снимок совпал с тем, что теперь в реестре.
     LoadDeviceData();
 
-    labelStatus->Text = L"Применено. Бэкап: " + gcnew String(backupPath.c_str());
+    labelStatus->Text = Localization::T(L"status.applied", gcnew String(backupPath.c_str()));
 }
 
 // -----------------------------------------------------------------------
@@ -557,15 +628,86 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
 // -----------------------------------------------------------------------
 void MainForm::buttonOpenBackups_Click(System::Object^ sender, System::EventArgs^ e)
 {
-    std::wstring dir = RegistryEngine::EnsureBackupDir();
+    std::wstring dir = BackupManager::EnsureBackupDir();
     if (dir.empty()) {
-        labelStatus->Text = L"Не удалось создать папку бэкапов.";
+        labelStatus->Text = Localization::T(L"status.backupDirFailed");
         return;
     }
     // ShellExecute открывает папку в Проводнике без запроса UAC.
     HINSTANCE result = ShellExecuteW(nullptr, L"explore", dir.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     if (reinterpret_cast<INT_PTR>(result) <= 32)
-        labelStatus->Text = L"Не удалось открыть папку бэкапов.";
+        labelStatus->Text = Localization::T(L"status.openBackupsFailed");
+}
+
+// -----------------------------------------------------------------------
+// Кнопка «Восстановить» — выбор .reg-бэкапа и запись его в реестр.
+// Перед записью делается автобэкап текущего состояния.
+// -----------------------------------------------------------------------
+void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
+{
+    DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
+    if (sel == nullptr) {
+        labelStatus->Text = Localization::T(L"status.noSelection");
+        return;
+    }
+
+    msclr::interop::marshal_context ctx;
+    std::wstring oemKey = ctx.marshal_as<std::wstring>(sel->RegistryKey);
+
+    // Диалог выбора .reg-файла, по умолчанию открываем папку бэкапов.
+    OpenFileDialog^ dlg = gcnew OpenFileDialog();
+    dlg->Title  = Localization::T(L"restore.fileDialogTitle");
+    dlg->Filter = Localization::T(L"restore.fileFilter");
+    std::wstring backupDir = BackupManager::EnsureBackupDir();
+    if (!backupDir.empty())
+        dlg->InitialDirectory = gcnew String(backupDir.c_str());
+
+    if (dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK)
+        return;
+
+    std::wstring filePath = ctx.marshal_as<std::wstring>(dlg->FileName);
+    auto parsed = BackupManager::ParseBackupFile(filePath);
+    if (!parsed.valid) {
+        labelStatus->Text = Localization::T(L"restore.parseError",
+            gcnew String(parsed.errorMessage.c_str()));
+        return;
+    }
+
+    // Собираем hex-строку байт OEMData из бэкапа для показа в диалоге.
+    System::Text::StringBuilder^ hexBuilder = gcnew System::Text::StringBuilder((int)parsed.oemDataRaw.size() * 3);
+    for (size_t i = 0; i < parsed.oemDataRaw.size(); ++i) {
+        if (i > 0) hexBuilder->Append(L' ');
+        hexBuilder->AppendFormat(L"{0:X2}", parsed.oemDataRaw[i]);
+    }
+
+    // Подтверждение: восстановление перезапишет текущие настройки устройства.
+    String^ msg = Localization::T(L"restore.confirmText",
+        gcnew String(parsed.oemName.c_str()),
+        hexBuilder->ToString());
+
+    if (MessageBox::Show(this, msg, Localization::T(L"restore.confirmTitle"),
+            MessageBoxButtons::OKCancel, MessageBoxIcon::Question)
+        != System::Windows::Forms::DialogResult::OK)
+        return;
+
+    // Пишем OEMData из бэкапа.
+    LSTATUS st = RegistryEngine::WriteDeviceData(oemKey, parsed.oemDataRaw);
+    if (st != ERROR_SUCCESS) {
+        labelStatus->Text = Localization::T(L"status.writeOemDataError", st);
+        return;
+    }
+
+    // Пишем OEMName, если он был в файле.
+    if (!parsed.oemName.empty()) {
+        st = RegistryEngine::WriteOemName(oemKey, parsed.oemName);
+        if (st != ERROR_SUCCESS) {
+            labelStatus->Text = Localization::T(L"restore.writeOemNameError", st);
+            return;
+        }
+    }
+
+    LoadDeviceData();
+    labelStatus->Text = Localization::T(L"restore.success", dlg->SafeFileName);
 }
 
 // -----------------------------------------------------------------------
@@ -575,6 +717,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
     Application::EnableVisualStyles();
     Application::SetCompatibleTextRenderingDefault(false);
+
+    // Применяем сохранённое предпочтение языка до создания формы — чтобы
+    // CurrentUICulture была корректной к моменту первого InitializeComponent.
+    // Если settings.ini отсутствует (первый запуск) — Localization вернёт Auto,
+    // а ApplyPreference(Auto) выставит InstalledUICulture (язык Windows).
+    Localization::ApplyPreference(Localization::LoadPreference());
+
     Application::Run(gcnew MainForm);
     return 0;
 }
