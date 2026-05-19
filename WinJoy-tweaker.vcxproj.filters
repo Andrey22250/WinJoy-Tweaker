@@ -42,6 +42,11 @@
     </Manifest>
   </ItemGroup>
   <ItemGroup>
+    <None Include="src\app.config">
+      <Filter>src</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="src\MainForm.resx">
       <Filter>src</Filter>
     </EmbeddedResource>

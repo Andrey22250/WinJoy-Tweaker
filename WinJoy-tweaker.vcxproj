@@ -162,4 +162,16 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <!--
+    Копируем src/app.config в <output>/<exe>.exe.config после билда.
+    .NET ищет конфигурацию рядом с exe и именно с расширением .config —
+    без этого секция DpiAwareness не применяется и WinForms игнорирует
+    смену DPI между мониторами.
+  -->
+  <ItemGroup>
+    <None Include="src\app.config" />
+  </ItemGroup>
+  <Target Name="CopyAppConfig" AfterTargets="Build" Inputs="src\app.config" Outputs="$(TargetPath).config">
+    <Copy SourceFiles="src\app.config" DestinationFiles="$(TargetPath).config" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

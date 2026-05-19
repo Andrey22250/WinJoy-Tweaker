@@ -179,6 +179,8 @@ void MainForm::ApplyLocalization()
     buttonApply->Text       = Localization::T(L"button.apply");
     buttonOpenBackups->Text = Localization::T(L"button.openBackups");
     buttonRestore->Text     = Localization::T(L"button.restore");
+
+    toolTipOemName->SetToolTip(textBoxOemName, Localization::T(L"tooltip.oemName"));
 }
 
 // Смена языка из combobox-а: сохраняем в settings.ini, применяем культуру,
@@ -575,6 +577,19 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
         return;
     }
 
+    // Валидация: поле количества кнопок не должно быть пустым.
+    if (textBoxDwNumButtons->Text->Trim()->Length == 0) {
+        labelStatus->Text = Localization::T(L"status.numButtonsEmpty");
+        return;
+    }
+
+    // Валидация: OEMName не может состоять только из пробелов.
+    String^ rawName = textBoxOemName->Text;
+    if (rawName->Length > 0 && rawName->Trim()->Length == 0) {
+        labelStatus->Text = Localization::T(L"status.oemNameOnlySpaces");
+        return;
+    }
+
     // Собираем новые байты из предпросмотра (они уже отражают текущий UI).
     if (textBoxPreviewData->Text->Length == 0) {
         labelStatus->Text = Localization::T(L"status.noDataToWrite");
@@ -609,8 +624,8 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
         return;
     }
 
-    // Записываем OEMName, если поле непустое.
-    String^ newName = textBoxOemName->Text->Trim();
+    // Записываем OEMName, если поле непустое (rawName проверен выше).
+    String^ newName = rawName->Trim();
     if (newName->Length > 0) {
         msclr::interop::marshal_context ctxName;
         std::wstring wName = ctxName.marshal_as<std::wstring>(newName);

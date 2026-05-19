@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Локальный мусор окружения
+*.stackdump
+repomix-output.xml
+
 # User-specific files
 *.rsuser
 *.suo
