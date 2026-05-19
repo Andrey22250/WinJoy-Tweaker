@@ -3,21 +3,24 @@
 #include <string>
 #include <vector>
 
+#include "RegistryEngine.h"   // NamedEntry
+
 // =====================================================================
 // BackupManager — Safety Manager проекта.
 //
-// Отвечает за создание .reg-файлов с текущим состоянием параметров
-// устройства (OEMName/OEMData) перед записью в реестр и за разбор
-// .reg-файлов при восстановлении. Не знает про RegistryEngine —
-// работает только с файлами на диске и переданными байтами.
+// Отвечает за создание .reg-файлов со ВСЕМ поддеревом устройства
+// (OEMName, OEMData, Axes\*, Buttons\*, OEMForceFeedback\*) перед записью
+// в реестр и за разбор .reg-файлов при восстановлении.
 // =====================================================================
 
 // Результат разбора .reg-файла бэкапа.
 struct BackupParseResult {
-    std::wstring        oemName;
-    std::vector<BYTE>   oemDataRaw;
-    bool                valid = false;
-    std::wstring        errorMessage;
+    std::wstring             oemName;
+    std::vector<BYTE>        oemDataRaw;
+    std::vector<NamedEntry>  axes;          // имена осей из подключей Axes\<N>
+    std::vector<NamedEntry>  buttons;       // имена кнопок из подключей Buttons\<N>
+    bool                     valid = false;
+    std::wstring             errorMessage;
 };
 
 namespace BackupManager {
@@ -29,22 +32,19 @@ namespace BackupManager {
     // либо пустую строку при ошибке.
     std::wstring EnsureBackupDir();
 
-    // Сохраняет OEMName и OEMData в .reg-файл (UTF-16 LE + BOM, формат
-    // «Windows Registry Editor Version 5.00»). Возвращает путь к файлу
-    // или "" при ошибке. После записи ротирует папку (max MAX_BACKUPS файлов).
+    // Сохраняет в .reg-файл (UTF-16 LE + BOM, формат «Windows Registry Editor
+    // Version 5.00») всё поддерево HKCU\...\OEM\<oemKey>: значения корневого
+    // ключа (OEMName/OEMData/...) и все подключи рекурсивно (Axes, Buttons,
+    // OEMForceFeedback). Читает свежее состояние из реестра.
     //
-    // Параметры:
-    //   oemKey   — имя OEM-подраздела (например "VID_046D&PID_C29B")
-    //   oemName  — текущее значение OEMName (REG_SZ)
-    //   rawBytes — сырые байты OEMData (REG_BINARY)
-    //   outDir   — директория для сохранения; если пусто — EnsureBackupDir()
+    // Возвращает путь к файлу или "" при ошибке. После записи ротирует папку
+    // бэкапов (max MAX_BACKUPS файлов).
     std::wstring WriteBackup(const std::wstring& oemKey,
-                             const std::wstring& oemName,
-                             const std::vector<BYTE>& rawBytes,
                              const std::wstring& outDir = L"");
 
     // Парсит .reg-файл бэкапа: UTF-16 LE с BOM (формат «Version 5.00»)
-    // или ANSI (REGEDIT4). Учитывает экранирование \\ и \" в OEMName
+    // или ANSI (REGEDIT4). Извлекает OEMName, OEMData и имена @ в подключах
+    // Axes\<N> / Buttons\<N>. Учитывает экранирование \\ и \" в строках
     // и перенос hex-блока через '\' в конце строки.
     BackupParseResult ParseBackupFile(const std::wstring& filePath);
 }

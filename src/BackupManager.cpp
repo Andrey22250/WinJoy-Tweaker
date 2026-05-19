@@ -1,6 +1,19 @@
 #include "BackupManager.h"
 #include <algorithm>
 #include <cwctype>
+#include <cstdlib>
+
+namespace {
+    // Корневой путь к ветке джойстиков. Дублирует константу из RegistryEngine,
+    // чтобы не вытаскивать её в публичный заголовок.
+    constexpr const wchar_t* JOYSTICK_REG_PATH =
+        L"System\\CurrentControlSet\\Control\\MediaProperties"
+        L"\\PrivateProperties\\Joystick\\OEM";
+
+    constexpr const wchar_t* JOYSTICK_REG_HKCU_PREFIX =
+        L"HKEY_CURRENT_USER\\System\\CurrentControlSet\\Control\\MediaProperties"
+        L"\\PrivateProperties\\Joystick\\OEM";
+}
 
 namespace BackupManager {
 
@@ -55,13 +68,171 @@ static void RotateBackups(const std::wstring& dir)
         DeleteFileW(files[i].second.c_str());
 }
 
+// =====================================================================
+// Хелперы записи .reg-файла
+// =====================================================================
+
+// Экранирование строкового значения REG_SZ (\ и " → \\ и \").
+static std::wstring EscapeRegString(const std::wstring& s)
+{
+    std::wstring out;
+    out.reserve(s.size() + 4);
+    for (wchar_t c : s) {
+        if      (c == L'\\') out += L"\\\\";
+        else if (c == L'"')  out += L"\\\"";
+        else out += c;
+    }
+    return out;
+}
+
+// Сериализация бинарного блока в формате hex:XX,XX,...,XX. Перенос длинных
+// строк через '\' для совместимости с regedit (>1024 символов в строке
+// regedit не любит; делим по 16 байт).
+static void WriteHexBlob(HANDLE hFile, const BYTE* data, DWORD size)
+{
+    auto writeW = [&](const std::wstring& s) {
+        DWORD w = 0;
+        WriteFile(hFile, s.c_str(),
+                  static_cast<DWORD>(s.size() * sizeof(wchar_t)), &w, nullptr);
+    };
+
+    for (DWORD i = 0; i < size; ++i) {
+        wchar_t hex[4] = {};
+        swprintf_s(hex, L"%02x", data[i]);
+        writeW(hex);
+        if (i + 1 < size) {
+            // Перенос каждые 25 байт: hex:NN,NN,...\<CRLF>  NN,NN,...
+            if ((i + 1) % 25 == 0) writeW(L",\\\r\n  ");
+            else                   writeW(L",");
+        }
+    }
+}
+
+// Дамп одного ключа: заголовок [полный\путь] + все значения. Подключи
+// обходятся снаружи рекурсивно.
+static void DumpKeyValues(HANDLE hFile, HKEY hKey,
+                          const std::wstring& fullDisplayPath)
+{
+    auto writeW = [&](const std::wstring& s) {
+        DWORD w = 0;
+        WriteFile(hFile, s.c_str(),
+                  static_cast<DWORD>(s.size() * sizeof(wchar_t)), &w, nullptr);
+    };
+
+    writeW(L"[" + fullDisplayPath + L"]\r\n");
+
+    DWORD index = 0;
+    while (true) {
+        WCHAR valueName[512];
+        DWORD nameLen = 512;
+        DWORD type = 0;
+        DWORD dataSize = 0;
+        LSTATUS s = RegEnumValueW(hKey, index++, valueName, &nameLen,
+                                  nullptr, &type, nullptr, &dataSize);
+        if (s == ERROR_NO_MORE_ITEMS) break;
+        if (s != ERROR_SUCCESS && s != ERROR_MORE_DATA) continue;
+
+        // Перечитываем сразу с правильным размером буфера.
+        std::vector<BYTE> buffer(dataSize ? dataSize : 1);
+        nameLen = 512;
+        s = RegEnumValueW(hKey, index - 1, valueName, &nameLen,
+                          nullptr, &type, buffer.data(), &dataSize);
+        if (s != ERROR_SUCCESS) continue;
+
+        // Имя значения: пустая строка → "@" (значение по умолчанию).
+        std::wstring nameTok = (nameLen == 0)
+            ? std::wstring(L"@")
+            : (L"\"" + EscapeRegString(valueName) + L"\"");
+
+        switch (type) {
+        case REG_SZ:
+        case REG_EXPAND_SZ: {
+            // dataSize включает терминирующий нуль; отрезаем его.
+            size_t chars = dataSize / sizeof(wchar_t);
+            if (chars > 0 && reinterpret_cast<wchar_t*>(buffer.data())[chars - 1] == 0)
+                --chars;
+            std::wstring v(reinterpret_cast<wchar_t*>(buffer.data()), chars);
+            writeW(nameTok + L"=\"" + EscapeRegString(v) + L"\"\r\n");
+            break;
+        }
+        case REG_DWORD: {
+            DWORD dw = 0;
+            if (dataSize >= sizeof(DWORD))
+                dw = *reinterpret_cast<DWORD*>(buffer.data());
+            wchar_t hex[16] = {};
+            swprintf_s(hex, L"%08x", dw);
+            writeW(nameTok + L"=dword:" + hex + L"\r\n");
+            break;
+        }
+        case REG_BINARY: {
+            writeW(nameTok + L"=hex:");
+            WriteHexBlob(hFile, buffer.data(), dataSize);
+            writeW(L"\r\n");
+            break;
+        }
+        default: {
+            // Прочие типы (MULTI_SZ, QWORD, ...) — hex(<type>):...
+            wchar_t tp[8] = {};
+            swprintf_s(tp, L"%x", type);
+            writeW(nameTok + L"=hex(" + tp + L"):");
+            WriteHexBlob(hFile, buffer.data(), dataSize);
+            writeW(L"\r\n");
+            break;
+        }
+        }
+    }
+}
+
+// Рекурсивный обход поддерева. После каждого ключа выводим пустую строку
+// — таков обычный формат regedit-экспорта.
+static void DumpSubtreeRec(HANDLE hFile, HKEY hKey,
+                           const std::wstring& fullDisplayPath)
+{
+    DumpKeyValues(hFile, hKey, fullDisplayPath);
+    {
+        DWORD w = 0;
+        const wchar_t* crlf = L"\r\n";
+        WriteFile(hFile, crlf, 2 * sizeof(wchar_t), &w, nullptr);
+    }
+
+    // Сначала собираем все имена подключей, потом обходим — на случай если
+    // в процессе чтения индексы поедут (теоретически — не должны на HKCU).
+    std::vector<std::wstring> subkeys;
+    DWORD index = 0;
+    while (true) {
+        WCHAR sub[256];
+        DWORD subLen = 256;
+        LSTATUS s = RegEnumKeyExW(hKey, index++, sub, &subLen,
+                                  nullptr, nullptr, nullptr, nullptr);
+        if (s == ERROR_NO_MORE_ITEMS) break;
+        if (s != ERROR_SUCCESS) continue;
+        subkeys.emplace_back(sub);
+    }
+
+    for (const auto& sub : subkeys) {
+        HKEY hChild = nullptr;
+        if (RegOpenKeyExW(hKey, sub.c_str(), 0, KEY_READ, &hChild) != ERROR_SUCCESS)
+            continue;
+        DumpSubtreeRec(hFile, hChild, fullDisplayPath + L"\\" + sub);
+        RegCloseKey(hChild);
+    }
+}
+
+// =====================================================================
+// Основной API
+// =====================================================================
+
 std::wstring WriteBackup(const std::wstring& oemKey,
-                         const std::wstring& oemName,
-                         const std::vector<BYTE>& rawBytes,
                          const std::wstring& outDir)
 {
     std::wstring dir = outDir.empty() ? EnsureBackupDir() : outDir;
     if (dir.empty()) return L"";
+
+    std::wstring deviceRegPath = std::wstring(JOYSTICK_REG_PATH) + L"\\" + oemKey;
+    HKEY hKey = nullptr;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, deviceRegPath.c_str(),
+                      0, KEY_READ, &hKey) != ERROR_SUCCESS)
+        return L"";
 
     // Временна́я метка: YYYYMMDD_HHMMSS.
     SYSTEMTIME st = {};
@@ -78,56 +249,94 @@ std::wstring WriteBackup(const std::wstring& oemKey,
 
     HANDLE hFile = CreateFileW(filePath.c_str(), GENERIC_WRITE, 0, nullptr,
                                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (hFile == INVALID_HANDLE_VALUE) return L"";
+    if (hFile == INVALID_HANDLE_VALUE) {
+        RegCloseKey(hKey);
+        return L"";
+    }
 
     auto writeW = [&](const std::wstring& s) {
-        DWORD written = 0;
+        DWORD w = 0;
         WriteFile(hFile, s.c_str(),
-                  static_cast<DWORD>(s.size() * sizeof(wchar_t)),
-                  &written, nullptr);
+                  static_cast<DWORD>(s.size() * sizeof(wchar_t)), &w, nullptr);
     };
 
     // BOM (0xFEFF) — обязателен для формата «Version 5.00».
     const wchar_t bom = L'\xFEFF';
     DWORD written = 0;
     WriteFile(hFile, &bom, sizeof(wchar_t), &written, nullptr);
-
     writeW(L"Windows Registry Editor Version 5.00\r\n\r\n");
 
-    std::wstring fullRegPath =
-        L"[HKEY_CURRENT_USER\\System\\CurrentControlSet\\Control\\"
-        L"MediaProperties\\PrivateProperties\\Joystick\\OEM\\" + oemKey + L"]\r\n";
-    writeW(fullRegPath);
+    std::wstring rootDisplay = std::wstring(JOYSTICK_REG_HKCU_PREFIX) + L"\\" + oemKey;
+    DumpSubtreeRec(hFile, hKey, rootDisplay);
 
-    // OEMName (REG_SZ): экранируем обратные слэши и кавычки.
-    {
-        std::wstring escaped;
-        escaped.reserve(oemName.size());
-        for (wchar_t c : oemName) {
-            if (c == L'\\') escaped += L"\\\\";
-            else if (c == L'"') escaped += L"\\\"";
-            else escaped += c;
-        }
-        writeW(L"\"OEMName\"=\"" + escaped + L"\"\r\n");
-    }
-
-    // OEMData (REG_BINARY): hex:XX,XX,XX,...
-    if (!rawBytes.empty()) {
-        writeW(L"\"OEMData\"=hex:");
-        for (size_t i = 0; i < rawBytes.size(); ++i) {
-            wchar_t hex[4] = {};
-            swprintf_s(hex, L"%02x", rawBytes[i]);
-            writeW(hex);
-            if (i + 1 < rawBytes.size()) writeW(L",");
-        }
-        writeW(L"\r\n");
-    }
-
-    writeW(L"\r\n");
     CloseHandle(hFile);
+    RegCloseKey(hKey);
 
     RotateBackups(dir);
     return filePath;
+}
+
+// =====================================================================
+// Разбор .reg-файла
+// =====================================================================
+
+// Парсит REG_SZ-значение начиная с позиции после открывающей кавычки.
+// Возвращает строку до закрывающей " и сдвигает p за неё.
+static std::wstring ParseRegString(const std::wstring& text, size_t& p)
+{
+    std::wstring out;
+    while (p < text.size()) {
+        wchar_t c = text[p++];
+        if (c == L'\\' && p < text.size()) {
+            wchar_t e = text[p++];
+            if      (e == L'\\') out += L'\\';
+            else if (e == L'"')  out += L'"';
+            else { out += L'\\'; out += e; }
+        } else if (c == L'"') {
+            return out;
+        } else {
+            out += c;
+        }
+    }
+    return out;
+}
+
+// Парсит hex:XX,XX,... возможно с переносом через '\' в конце строки.
+static std::vector<BYTE> ParseHexBlob(const std::wstring& text, size_t& p)
+{
+    std::wstring blob;
+    while (p < text.size()) {
+        wchar_t c = text[p++];
+        if (c == L'\\') {
+            while (p < text.size() && text[p] != L'\n') ++p;
+            if (p < text.size()) ++p;
+            while (p < text.size() && (text[p] == L' ' || text[p] == L'\t')) ++p;
+        } else if (c == L'\r' || c == L'\n') {
+            break;
+        } else if (c != L' ' && c != L'\t') {
+            blob += c;
+        }
+    }
+
+    auto hexVal = [](wchar_t c) -> int {
+        if (c >= L'0' && c <= L'9') return c - L'0';
+        if (c >= L'a' && c <= L'f') return c - L'a' + 10;
+        if (c >= L'A' && c <= L'F') return c - L'A' + 10;
+        return -1;
+    };
+
+    std::vector<BYTE> bytes;
+    for (size_t i = 0; i + 1 < blob.size(); ) {
+        while (i < blob.size() && !iswxdigit(blob[i])) ++i;
+        if (i + 1 >= blob.size()) break;
+        int v1 = hexVal(blob[i]);
+        int v2 = hexVal(blob[i + 1]);
+        if (v1 < 0 || v2 < 0) break;
+        bytes.push_back(static_cast<BYTE>((v1 << 4) | v2));
+        i += 2;
+        if (i < blob.size() && blob[i] == L',') ++i;
+    }
+    return bytes;
 }
 
 BackupParseResult ParseBackupFile(const std::wstring& filePath)
@@ -142,7 +351,9 @@ BackupParseResult ParseBackupFile(const std::wstring& filePath)
     }
 
     LARGE_INTEGER sz = {};
-    if (!GetFileSizeEx(hFile, &sz) || sz.QuadPart <= 0 || sz.QuadPart > (64 * 1024)) {
+    // Лимит подняли до 1 МБ — поддерево с FF-эффектами заметно больше
+    // одного OEMData, но реалистично не превышает сотен килобайт.
+    if (!GetFileSizeEx(hFile, &sz) || sz.QuadPart <= 0 || sz.QuadPart > (1024 * 1024)) {
         CloseHandle(hFile);
         r.errorMessage = L"Некорректный размер .reg-файла.";
         return r;
@@ -168,71 +379,134 @@ BackupParseResult ParseBackupFile(const std::wstring& filePath)
         for (BYTE b : bytes) text.push_back(static_cast<wchar_t>(b));
     }
 
-    // --- OEMName: "OEMName"="..." с экранированием \\ и \" ---
-    const std::wstring keyName = L"\"OEMName\"=\"";
-    size_t kn = text.find(keyName);
-    if (kn != std::wstring::npos) {
-        size_t p = kn + keyName.size();
-        std::wstring name;
-        while (p < text.size()) {
-            wchar_t c = text[p++];
-            if (c == L'\\' && p < text.size()) {
-                wchar_t e = text[p++];
-                if      (e == L'\\') name += L'\\';
-                else if (e == L'"')  name += L'"';
-                else { name += L'\\'; name += e; }
-            } else if (c == L'"') {
-                break;
-            } else {
-                name += c;
+    // Проходим по файлу построчно, помня текущий контекст:
+    // currentScope = "root"   — мы внутри [...\<oemKey>]
+    //                "axis_N" — внутри [...\<oemKey>\Axes\N]
+    //                "btn_N"  — внутри [...\<oemKey>\Buttons\N]
+    //                ""       — посторонний ключ, игнорируем.
+    enum class Scope { Other, Root, Axis, Button };
+    Scope scope = Scope::Other;
+    int   scopeIndex = 0;
+
+    size_t pos = 0;
+    while (pos < text.size()) {
+        // Пропуск пробелов и переводов строк.
+        while (pos < text.size() &&
+               (text[pos] == L'\r' || text[pos] == L'\n'))
+            ++pos;
+        if (pos >= text.size()) break;
+
+        // Заголовок ключа.
+        if (text[pos] == L'[') {
+            ++pos;
+            size_t end = text.find(L']', pos);
+            if (end == std::wstring::npos) break;
+            std::wstring header(text, pos, end - pos);
+            pos = end + 1;
+
+            // Определяем scope по хвосту заголовка после "\OEM\<oemKey>".
+            // Ищем токены "\Axes\N", "\Buttons\N" в конце.
+            scope = Scope::Other;
+            auto endsWithIndex = [&](const wchar_t* mid, Scope sc) {
+                std::wstring marker = std::wstring(L"\\") + mid + L"\\";
+                size_t p = header.rfind(marker);
+                if (p == std::wstring::npos) return false;
+                std::wstring tail = header.substr(p + marker.size());
+                wchar_t* e = nullptr;
+                long v = wcstol(tail.c_str(), &e, 10);
+                if (e == tail.c_str() || *e != L'\0') return false;
+                scope = sc;
+                scopeIndex = static_cast<int>(v);
+                return true;
+            };
+
+            if (!endsWithIndex(L"Axes", Scope::Axis) &&
+                !endsWithIndex(L"Buttons", Scope::Button))
+            {
+                // Это корневой ключ устройства, если в конце нет ещё одного '\'.
+                size_t lastSlash = header.rfind(L'\\');
+                if (lastSlash != std::wstring::npos) {
+                    std::wstring tail = header.substr(lastSlash + 1);
+                    // Эвристика: VID_xxxx&PID_xxxx — корневой ключ устройства.
+                    if (tail.rfind(L"VID_", 0) == 0)
+                        scope = Scope::Root;
+                }
+            }
+            continue;
+        }
+
+        // Строка значения. Читаем до конца строки.
+        size_t lineEnd = text.find(L'\n', pos);
+        if (lineEnd == std::wstring::npos) lineEnd = text.size();
+        std::wstring line(text, pos, lineEnd - pos);
+        if (!line.empty() && line.back() == L'\r') line.pop_back();
+
+        // Достаём имя значения и сам токен значения.
+        // Форматы: "Name"=type:data  или  @=type:data
+        size_t eq = line.find(L'=');
+        if (eq == std::wstring::npos) {
+            pos = lineEnd + 1;
+            continue;
+        }
+        std::wstring lhs = line.substr(0, eq);
+
+        // Какое именно значение перед нами?
+        bool isDefault = (lhs == L"@");
+        std::wstring valueName;
+        if (!isDefault && lhs.size() >= 2 && lhs.front() == L'"' && lhs.back() == L'"')
+            valueName = lhs.substr(1, lhs.size() - 2);
+
+        // Точка чтения внутри text — сразу после '=' исходной позиции pos.
+        size_t valPos = pos + eq + 1;
+
+        // OEMName в корневом ключе.
+        if (scope == Scope::Root && valueName == L"OEMName"
+            && valPos < text.size() && text[valPos] == L'"')
+        {
+            ++valPos;
+            r.oemName = ParseRegString(text, valPos);
+        }
+        // OEMData (REG_BINARY): валидный префикс — "hex:" или "hex(3):".
+        else if (scope == Scope::Root && valueName == L"OEMData")
+        {
+            const std::wstring p1 = L"hex:";
+            const std::wstring p2 = L"hex(3):";
+            if (text.compare(valPos, p1.size(), p1) == 0) {
+                valPos += p1.size();
+                r.oemDataRaw = ParseHexBlob(text, valPos);
+            } else if (text.compare(valPos, p2.size(), p2) == 0) {
+                valPos += p2.size();
+                r.oemDataRaw = ParseHexBlob(text, valPos);
             }
         }
-        r.oemName = name;
-    }
-
-    // --- OEMData: "OEMData"=hex:XX,XX,... (с возможным переносом через '\') ---
-    const std::wstring keyData = L"\"OEMData\"=hex:";
-    size_t kd = text.find(keyData);
-    if (kd != std::wstring::npos) {
-        size_t p = kd + keyData.size();
-        std::wstring blob;
-        while (p < text.size()) {
-            wchar_t c = text[p++];
-            if (c == L'\\') {
-                // Перенос строки: пропускаем до конца строки и ведущие пробелы.
-                while (p < text.size() && text[p] != L'\n') ++p;
-                if (p < text.size()) ++p;
-                while (p < text.size() && (text[p] == L' ' || text[p] == L'\t')) ++p;
-            } else if (c == L'\r' || c == L'\n') {
-                break;
-            } else if (c != L' ' && c != L'\t') {
-                blob += c;
-            }
+        // @ имени оси/кнопки.
+        else if (isDefault && (scope == Scope::Axis || scope == Scope::Button)
+                 && valPos < text.size() && text[valPos] == L'"')
+        {
+            ++valPos;
+            NamedEntry e;
+            e.index = scopeIndex;
+            e.name  = ParseRegString(text, valPos);
+            if (scope == Scope::Axis) r.axes.push_back(std::move(e));
+            else                      r.buttons.push_back(std::move(e));
         }
 
-        auto hexVal = [](wchar_t c) -> int {
-            if (c >= L'0' && c <= L'9') return c - L'0';
-            if (c >= L'a' && c <= L'f') return c - L'a' + 10;
-            if (c >= L'A' && c <= L'F') return c - L'A' + 10;
-            return -1;
-        };
-
-        for (size_t i = 0; i + 1 < blob.size(); ) {
-            while (i < blob.size() && !iswxdigit(blob[i])) ++i;
-            if (i + 1 >= blob.size()) break;
-            int v1 = hexVal(blob[i]);
-            int v2 = hexVal(blob[i + 1]);
-            if (v1 < 0 || v2 < 0) break;
-            r.oemDataRaw.push_back(static_cast<BYTE>((v1 << 4) | v2));
-            i += 2;
-            if (i < blob.size() && blob[i] == L',') ++i;
-        }
+        pos = lineEnd + 1;
     }
 
-    if (r.oemDataRaw.empty()) {
-        r.errorMessage = L"В файле не найдены данные OEMData.";
+    // Считаем разбор успешным, если найдены либо OEMData, либо имена в
+    // подключах: старые однострочные бэкапы (только OEMName+OEMData)
+    // продолжают работать, новые с поддеревом — тоже.
+    if (r.oemDataRaw.empty() && r.axes.empty() && r.buttons.empty()) {
+        r.errorMessage = L"В файле не найдены параметры устройства.";
         return r;
     }
+
+    std::sort(r.axes.begin(), r.axes.end(),
+        [](const NamedEntry& a, const NamedEntry& b) { return a.index < b.index; });
+    std::sort(r.buttons.begin(), r.buttons.end(),
+        [](const NamedEntry& a, const NamedEntry& b) { return a.index < b.index; });
+
     r.valid = true;
     return r;
 }

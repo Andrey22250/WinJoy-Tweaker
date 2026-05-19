@@ -129,6 +129,56 @@ void MainForm::ApplyDarkTheme()
 
     comboBoxLanguage->BackColor = bgPanel;
     comboBoxLanguage->ForeColor = textOn;
+
+    // ── Вкладки и редактор имён осей/кнопок ──────────────────────────────
+    tabMain->BackColor       = bgDark;
+    tabPageOem->BackColor    = bgDark;
+    tabPageAxes->BackColor   = bgDark;
+    layoutAxesTab->BackColor = bgDark;
+    panelAxesButtons->BackColor = bgDark;
+
+    labelAxesGridHeader->ForeColor    = textOn;
+    labelButtonsGridHeader->ForeColor = textOn;
+
+    array<DataGridView^>^ grids = gcnew array<DataGridView^> { dataGridAxes, dataGridButtons };
+    for each (DataGridView^ g in grids) {
+        g->BackgroundColor = bgPanel;
+        g->GridColor       = border;
+        g->ForeColor       = textOn;
+
+        // Стиль заголовков столбцов
+        DataGridViewCellStyle^ hdr = gcnew DataGridViewCellStyle();
+        hdr->BackColor = Color::FromArgb(37, 37, 38);
+        hdr->ForeColor = textOn;
+        hdr->SelectionBackColor = hdr->BackColor;
+        hdr->SelectionForeColor = textOn;
+        hdr->Padding = System::Windows::Forms::Padding(6, 4, 6, 4);
+        g->ColumnHeadersDefaultCellStyle = hdr;
+
+        // Стиль ячеек: выделение — мягко-синее, чтобы не «слепить» в тёмной теме
+        DataGridViewCellStyle^ cell = gcnew DataGridViewCellStyle();
+        cell->BackColor = bgPanel;
+        cell->ForeColor = textOn;
+        cell->SelectionBackColor = Color::FromArgb(0, 99, 177);
+        cell->SelectionForeColor = textOn;
+        cell->Padding = System::Windows::Forms::Padding(6, 2, 6, 2);
+        g->DefaultCellStyle = cell;
+    }
+
+    // Кнопки вкладки
+    array<Button^>^ axesBtns = gcnew array<Button^> { buttonReloadNames, buttonApplyNames };
+    for each (Button^ b in axesBtns) {
+        b->BackColor = bgPanel;
+        b->ForeColor = textOn;
+        b->FlatStyle = FlatStyle::Flat;
+        b->FlatAppearance->BorderColor        = border;
+        b->FlatAppearance->MouseOverBackColor = Color::FromArgb(62, 62, 64);
+        b->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 122, 204);
+    }
+    // «Применить имена» — акцентная синяя, как buttonApply
+    buttonApplyNames->BackColor = Color::FromArgb(0, 99, 177);
+    buttonApplyNames->FlatAppearance->MouseOverBackColor = Color::FromArgb(0, 122, 204);
+    buttonApplyNames->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 80, 150);
 }
 
 // -----------------------------------------------------------------------
@@ -181,6 +231,22 @@ void MainForm::ApplyLocalization()
     buttonRestore->Text     = Localization::T(L"button.restore");
 
     toolTipOemName->SetToolTip(textBoxOemName, Localization::T(L"tooltip.oemName"));
+
+    // Вкладки
+    tabPageOem->Text  = Localization::T(L"tab.oemData");
+    tabPageAxes->Text = Localization::T(L"tab.axesButtons");
+
+    labelAxesGridHeader->Text    = Localization::T(L"axes.gridHeader");
+    labelButtonsGridHeader->Text = Localization::T(L"buttons.gridHeader");
+
+    buttonReloadNames->Text = Localization::T(L"axes.buttonReload");
+    buttonApplyNames->Text  = Localization::T(L"axes.buttonApply");
+
+    // Заголовки столбцов сеток.
+    colAxesIndex->HeaderText    = Localization::T(L"axes.colIndex");
+    colAxesName->HeaderText     = Localization::T(L"axes.colName");
+    colButtonsIndex->HeaderText = Localization::T(L"axes.colIndex");
+    colButtonsName->HeaderText  = Localization::T(L"axes.colName");
 }
 
 // Смена языка из combobox-а: сохраняем в settings.ini, применяем культуру,
@@ -278,6 +344,10 @@ void MainForm::ClearFlagControls()
     textBoxPreviewData->Text = String::Empty;
 
     groupBoxFlags->Enabled = false;
+
+    // Сетки имён осей/кнопок — тоже чистим.
+    dataGridAxes->Rows->Clear();
+    dataGridButtons->Rows->Clear();
 }
 
 // -----------------------------------------------------------------------
@@ -384,6 +454,11 @@ void MainForm::LoadDeviceData()
 
     groupBoxFlags->Enabled = true;
     UpdatePreviewData();
+
+    // Заполняем вкладку «Оси и кнопки» содержимым подключей Axes\<N>\@ и
+    // Buttons\<N>\@. Если для устройства этих подключей нет (бывает у XInput
+    // и Bluetooth-геймпадов) — сетки просто останутся пустыми.
+    PopulateNamesGrids(data);
 }
 
 // -----------------------------------------------------------------------
@@ -544,7 +619,9 @@ void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
         return;
     }
 
-    std::wstring backupPath = BackupManager::WriteBackup(oemKey, data.oemName, data.oemDataRaw);
+    // WriteBackup сам читает свежее поддерево HKCU\...\OEM\<oemKey> из
+    // реестра — кэшированные data.oemName/data.oemDataRaw уже не нужны.
+    std::wstring backupPath = BackupManager::WriteBackup(oemKey);
     if (backupPath.empty()) {
         labelStatus->Text = Localization::T(L"status.backupFailed");
         return;
@@ -570,8 +647,8 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
         return;
     }
 
-    // Автоматический тихий бэкап перед любой записью.
-    std::wstring backupPath = BackupManager::WriteBackup(oemKey, current.oemName, current.oemDataRaw);
+    // Автоматический тихий бэкап перед любой записью — полное поддерево HKCU.
+    std::wstring backupPath = BackupManager::WriteBackup(oemKey);
     if (backupPath.empty()) {
         labelStatus->Text = Localization::T(L"status.backupBeforeApplyFailed");
         return;
@@ -728,6 +805,118 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
 
     LoadDeviceData();
     labelStatus->Text = Localization::T(L"restore.success", dlg->SafeFileName);
+}
+
+// -----------------------------------------------------------------------
+// Вкладка «Оси и кнопки» — заполнение сеток из DeviceData
+// -----------------------------------------------------------------------
+void MainForm::PopulateNamesGrids(const DeviceData& data)
+{
+    dataGridAxes->Rows->Clear();
+    dataGridButtons->Rows->Clear();
+
+    for (const auto& e : data.axes) {
+        int row = dataGridAxes->Rows->Add();
+        // Колонку Index сохраняем как boxed int — потом тривиально извлечь
+        // через Convert::ToInt32, при этом ReadOnly защищает от правки.
+        dataGridAxes->Rows[row]->Cells[0]->Value = e.index;
+        dataGridAxes->Rows[row]->Cells[1]->Value = gcnew String(e.name.c_str());
+    }
+
+    for (const auto& e : data.buttons) {
+        int row = dataGridButtons->Rows->Add();
+        dataGridButtons->Rows[row]->Cells[0]->Value = e.index;
+        dataGridButtons->Rows[row]->Cells[1]->Value = gcnew String(e.name.c_str());
+    }
+}
+
+// Чтение состояния сетки в std::vector<NamedEntry>.
+// Возвращает только записи с непустым именем — пустые поля интерпретируем
+// как «не трогать». Возвращаемый тип — managed для удобства передачи между
+// двумя обработчиками, но сам обход — нативный.
+static std::vector<NamedEntry> ReadGridEntries(System::Windows::Forms::DataGridView^ grid)
+{
+    std::vector<NamedEntry> out;
+    msclr::interop::marshal_context ctx;
+    for (int i = 0; i < grid->Rows->Count; ++i) {
+        System::Object^ idxBox = grid->Rows[i]->Cells[0]->Value;
+        System::Object^ nameBox = grid->Rows[i]->Cells[1]->Value;
+        if (idxBox == nullptr) continue;
+
+        NamedEntry e;
+        e.index = System::Convert::ToInt32(idxBox);
+        if (nameBox != nullptr)
+            e.name = ctx.marshal_as<std::wstring>(nameBox->ToString());
+        out.push_back(std::move(e));
+    }
+    return out;
+}
+
+// -----------------------------------------------------------------------
+// Кнопка «Перечитать» — обновить сетки из реестра без изменений UI основной вкладки
+// -----------------------------------------------------------------------
+void MainForm::buttonReloadNames_Click(System::Object^ sender, System::EventArgs^ e)
+{
+    // Полная перезагрузка устройства проще и безопаснее: гарантирует, что
+    // отображение OEMData и Axes/Buttons согласованы.
+    LoadDeviceData();
+}
+
+// -----------------------------------------------------------------------
+// Кнопка «Применить имена» — автобэкап + запись Axes\<N>\@ и Buttons\<N>\@
+// -----------------------------------------------------------------------
+void MainForm::buttonApplyNames_Click(System::Object^ sender, System::EventArgs^ e)
+{
+    DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
+    if (sel == nullptr) {
+        labelStatus->Text = Localization::T(L"status.noSelection");
+        return;
+    }
+    msclr::interop::marshal_context ctxKey;
+    std::wstring oemKey = ctxKey.marshal_as<std::wstring>(sel->RegistryKey);
+
+    auto axes    = ReadGridEntries(dataGridAxes);
+    auto buttons = ReadGridEntries(dataGridButtons);
+    if (axes.empty() && buttons.empty()) {
+        labelStatus->Text = Localization::T(L"status.namesNoData");
+        return;
+    }
+
+    // Автобэкап перед записью — полный экспорт поддерева.
+    std::wstring backupPath = BackupManager::WriteBackup(oemKey);
+    if (backupPath.empty()) {
+        labelStatus->Text = Localization::T(L"status.backupBeforeApplyFailed");
+        return;
+    }
+
+    // Считаем сколько успешно записано / сколько провалилось.
+    int written = 0;
+    int failed  = 0;
+    LSTATUS lastError = ERROR_SUCCESS;
+
+    for (const auto& a : axes) {
+        LSTATUS s = RegistryEngine::WriteAxisName(oemKey, a.index, a.name);
+        if (s == ERROR_SUCCESS) ++written;
+        else                    { ++failed; lastError = s; }
+    }
+    for (const auto& b : buttons) {
+        LSTATUS s = RegistryEngine::WriteButtonName(oemKey, b.index, b.name);
+        if (s == ERROR_SUCCESS) ++written;
+        else                    { ++failed; lastError = s; }
+    }
+
+    if (failed > 0 && written == 0) {
+        labelStatus->Text = Localization::T(L"status.namesWriteError",
+            (int)lastError);
+        return;
+    }
+    if (failed > 0) {
+        // Частичный успех: говорим сколько записано и сколько провалено.
+        labelStatus->Text = Localization::T(L"status.namesAppliedPartial",
+            written, failed);
+        return;
+    }
+    labelStatus->Text = Localization::T(L"status.namesApplied", written);
 }
 
 // -----------------------------------------------------------------------

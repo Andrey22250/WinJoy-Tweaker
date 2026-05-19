@@ -3,6 +3,7 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <algorithm>
+#include <cstdlib>   // wcstol
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -163,6 +164,62 @@ DeviceData ReadDeviceData(const std::wstring& oemKey)
         }
     }
 
+    // --- Подразделы Axes\<N> и Buttons\<N> (опциональны) ---
+    auto readNamedSubkeys = [&](const wchar_t* container,
+                                std::vector<NamedEntry>& out)
+    {
+        HKEY hContainer = nullptr;
+        std::wstring containerPath = fullPath + L"\\" + container;
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, containerPath.c_str(),
+                          0, KEY_READ, &hContainer) != ERROR_SUCCESS)
+            return;
+
+        DWORD idx = 0;
+        WCHAR sub[64];
+        while (true) {
+            DWORD subLen = 64;
+            LSTATUS s = RegEnumKeyExW(hContainer, idx++,
+                sub, &subLen, nullptr, nullptr, nullptr, nullptr);
+            if (s == ERROR_NO_MORE_ITEMS) break;
+            if (s != ERROR_SUCCESS) continue;
+
+            // Имя подключа — десятичный индекс ("0", "1", "10", ...).
+            // Парсим вручную: wcstol допускает ведущие пробелы/знак, но
+            // реестр их не содержит — лишних проверок не делаем.
+            wchar_t* end = nullptr;
+            long parsed = wcstol(sub, &end, 10);
+            if (end == sub || *end != L'\0') continue;
+
+            HKEY hEntry = nullptr;
+            if (RegOpenKeyExW(hContainer, sub, 0, KEY_READ, &hEntry) != ERROR_SUCCESS)
+                continue;
+
+            WCHAR nm[256] = {};
+            DWORD nmLen = sizeof(nm), tp = 0;
+            // Значение по умолчанию — name == nullptr или L"".
+            LSTATUS qs = RegQueryValueExW(hEntry, nullptr, nullptr, &tp,
+                reinterpret_cast<LPBYTE>(nm), &nmLen);
+
+            NamedEntry e;
+            e.index = static_cast<int>(parsed);
+            if (qs == ERROR_SUCCESS && tp == REG_SZ && nmLen > sizeof(WCHAR))
+                e.name = nm;
+            out.push_back(std::move(e));
+            RegCloseKey(hEntry);
+        }
+        RegCloseKey(hContainer);
+
+        // Реестр перечисляет подключи в алфавитном порядке ("0","1","10","2",…)
+        // — для UI логичнее числовая сортировка по индексу.
+        std::sort(out.begin(), out.end(),
+            [](const NamedEntry& a, const NamedEntry& b) {
+                return a.index < b.index;
+            });
+    };
+
+    readNamedSubkeys(L"Axes",    result.axes);
+    readNamedSubkeys(L"Buttons", result.buttons);
+
     RegCloseKey(hKey);
     return result;
 }
@@ -205,6 +262,42 @@ LSTATUS WriteOemName(const std::wstring& oemKey,
                         byteSize);
     RegCloseKey(hKey);
     return st;
+}
+
+// Общая реализация записи имени для Axes\<N> и Buttons\<N>: значение @ типа
+// REG_SZ. Подключ не создаём — если он отсутствует, возвращаем ошибку открытия,
+// чтобы не плодить «фантомные» оси/кнопки, которых нет в драйвере.
+static LSTATUS WriteNamedEntry(const std::wstring& oemKey,
+                               const wchar_t* container,
+                               int index,
+                               const std::wstring& name)
+{
+    std::wstring fullPath = std::wstring(JOYSTICK_REG_PATH) + L"\\" + oemKey
+                          + L"\\" + container + L"\\" + std::to_wstring(index);
+
+    HKEY hKey = nullptr;
+    LSTATUS st = RegOpenKeyExW(HKEY_CURRENT_USER, fullPath.c_str(),
+                               0, KEY_SET_VALUE, &hKey);
+    if (st != ERROR_SUCCESS) return st;
+
+    DWORD byteSize = static_cast<DWORD>((name.size() + 1) * sizeof(wchar_t));
+    st = RegSetValueExW(hKey, nullptr, 0, REG_SZ,
+                        reinterpret_cast<const BYTE*>(name.c_str()),
+                        byteSize);
+    RegCloseKey(hKey);
+    return st;
+}
+
+LSTATUS WriteAxisName(const std::wstring& oemKey,
+                      int index, const std::wstring& name)
+{
+    return WriteNamedEntry(oemKey, L"Axes", index, name);
+}
+
+LSTATUS WriteButtonName(const std::wstring& oemKey,
+                        int index, const std::wstring& name)
+{
+    return WriteNamedEntry(oemKey, L"Buttons", index, name);
 }
 
 } // namespace RegistryEngine

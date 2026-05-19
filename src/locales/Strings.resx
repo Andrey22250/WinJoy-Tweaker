@@ -327,4 +327,40 @@
   <data name="common.noDataPlaceholder" xml:space="preserve">
     <value>—</value>
   </data>
+  <data name="tab.oemData" xml:space="preserve">
+    <value>OEMData</value>
+  </data>
+  <data name="tab.axesButtons" xml:space="preserve">
+    <value>Оси и кнопки</value>
+  </data>
+  <data name="axes.gridHeader" xml:space="preserve">
+    <value>Оси</value>
+  </data>
+  <data name="buttons.gridHeader" xml:space="preserve">
+    <value>Кнопки</value>
+  </data>
+  <data name="axes.colIndex" xml:space="preserve">
+    <value>№</value>
+  </data>
+  <data name="axes.colName" xml:space="preserve">
+    <value>Имя</value>
+  </data>
+  <data name="axes.buttonReload" xml:space="preserve">
+    <value>Перечитать с устройства</value>
+  </data>
+  <data name="axes.buttonApply" xml:space="preserve">
+    <value>Применить имена</value>
+  </data>
+  <data name="status.namesNoData" xml:space="preserve">
+    <value>У этого устройства нет подразделов Axes/Buttons в реестре.</value>
+  </data>
+  <data name="status.namesApplied" xml:space="preserve">
+    <value>Имена записаны ({0}).</value>
+  </data>
+  <data name="status.namesAppliedPartial" xml:space="preserve">
+    <value>Записано: {0}; ошибок: {1}.</value>
+  </data>
+  <data name="status.namesWriteError" xml:space="preserve">
+    <value>Не удалось записать имена (код: {0}).</value>
+  </data>
 </root>

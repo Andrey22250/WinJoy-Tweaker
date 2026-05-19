@@ -76,13 +76,24 @@ namespace JoyHws {
     constexpr DWORD Y_AXIS_MASK = YISJ1X | YISJ2X | YISJ2Y;
 }
 
+// Одна запись подраздела Axes\<N> или Buttons\<N>.
+// Индекс — порядковый номер из имени подключа ("0", "1", "10", ...).
+// Имя — значение по умолчанию (@, REG_SZ), отображаемое DirectInput-играми
+// и панелью «Свойства игрового устройства».
+struct NamedEntry {
+    int             index = 0;
+    std::wstring    name;
+};
+
 // Полный набор данных, считанных для одного устройства из реестра.
 struct DeviceData {
-    std::wstring        oemName;       // значение OEMName (REG_SZ)
-    std::vector<BYTE>   oemDataRaw;    // сырые байты OEMData (REG_BINARY)
-    bool                hasOemData = false;
-    JOYREGHWCONFIG      hwConfig   = {};
-    std::wstring        errorMessage;
+    std::wstring             oemName;       // значение OEMName (REG_SZ)
+    std::vector<BYTE>        oemDataRaw;    // сырые байты OEMData (REG_BINARY)
+    bool                     hasOemData = false;
+    JOYREGHWCONFIG           hwConfig   = {};
+    std::vector<NamedEntry>  axes;          // содержимое подключа Axes\<N>\@
+    std::vector<NamedEntry>  buttons;       // содержимое подключа Buttons\<N>\@
+    std::wstring             errorMessage;
 };
 
 namespace RegistryEngine {
@@ -107,4 +118,12 @@ namespace RegistryEngine {
     // Запись изменённого OEMName (REG_SZ) в HKCU.
     LSTATUS WriteOemName(const std::wstring& oemKey,
                          const std::wstring& oemName);
+
+    // Запись имени оси или кнопки (значение @, REG_SZ) в HKCU.
+    // Подключ должен уже существовать — функция НЕ создаёт оси/кнопки,
+    // которых нет физически (это могло бы сломать перечисление в драйвере).
+    LSTATUS WriteAxisName(const std::wstring& oemKey,
+                          int index, const std::wstring& name);
+    LSTATUS WriteButtonName(const std::wstring& oemKey,
+                            int index, const std::wstring& name);
 }

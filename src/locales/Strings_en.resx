@@ -327,4 +327,40 @@ OEMData bytes: {1}</value>
   <data name="common.noDataPlaceholder" xml:space="preserve">
     <value>—</value>
   </data>
+  <data name="tab.oemData" xml:space="preserve">
+    <value>OEMData</value>
+  </data>
+  <data name="tab.axesButtons" xml:space="preserve">
+    <value>Axes &amp; Buttons</value>
+  </data>
+  <data name="axes.gridHeader" xml:space="preserve">
+    <value>Axes</value>
+  </data>
+  <data name="buttons.gridHeader" xml:space="preserve">
+    <value>Buttons</value>
+  </data>
+  <data name="axes.colIndex" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="axes.colName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="axes.buttonReload" xml:space="preserve">
+    <value>Reload from device</value>
+  </data>
+  <data name="axes.buttonApply" xml:space="preserve">
+    <value>Apply names</value>
+  </data>
+  <data name="status.namesNoData" xml:space="preserve">
+    <value>This device has no Axes/Buttons subkeys in the registry.</value>
+  </data>
+  <data name="status.namesApplied" xml:space="preserve">
+    <value>Names written ({0}).</value>
+  </data>
+  <data name="status.namesAppliedPartial" xml:space="preserve">
+    <value>Written: {0}; failed: {1}.</value>
+  </data>
+  <data name="status.namesWriteError" xml:space="preserve">
+    <value>Failed to write names (code: {0}).</value>
+  </data>
 </root>
