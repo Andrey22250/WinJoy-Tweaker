@@ -192,9 +192,9 @@ namespace WinJoytweaker {
         void LoadDeviceData();
         void ClearFlagControls();
 
-        // Тип сообщения в строке статуса — определяет цвет текста.
-        enum class StatusKind { Neutral, Success, Error };
-        void SetStatus(System::String^ text, StatusKind kind);
+        // kind: 0 = нейтральный (серый), 1 = успех (зелёный), 2 = ошибка (красный).
+        // Используются константы Status* из MainForm.cpp.
+        void SetStatus(System::String^ text, int kind);
         // Блокировка/разблокировка элементов редактирования (нет устройств → false).
         void SetControlsEnabled(bool enabled);
         void UpdatePreviewData();

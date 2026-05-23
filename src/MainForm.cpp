@@ -11,6 +11,11 @@ using namespace System;
 using namespace System::Windows::Forms;
 using namespace System::Drawing;
 
+// Типы сообщения статуса (параметр kind в SetStatus).
+static const int StatusNeutral = 0;  // серый
+static const int StatusSuccess = 1;  // зелёный
+static const int StatusError   = 2;  // красный
+
 // -----------------------------------------------------------------------
 // Managed-обёртка над DeviceEntry для отображения в ComboBox
 // -----------------------------------------------------------------------
@@ -285,21 +290,21 @@ void MainForm::RefreshDeviceList()
             SetControlsEnabled(true);
             comboBoxDevice->SelectedIndex = 0;
             // LoadDeviceData() вызовется автоматически через SelectedIndexChanged
-            SetStatus(Localization::T(L"status.devicesConnected", (int)devices.size()), StatusKind::Success);
+            SetStatus(Localization::T(L"status.devicesConnected", (int)devices.size()), StatusSuccess);
         } else {
             textBoxOemName->Text = String::Empty;
             ClearFlagControls();
             SetControlsEnabled(false);
-            SetStatus(Localization::T(L"status.noDevices"), StatusKind::Error);
+            SetStatus(Localization::T(L"status.noDevices"), StatusError);
         }
     }
     catch (System::Exception^ ex) {
         SetControlsEnabled(false);
-        SetStatus(Localization::T(L"status.scanError", ex->Message), StatusKind::Error);
+        SetStatus(Localization::T(L"status.scanError", ex->Message), StatusError);
     }
     catch (...) {
         SetControlsEnabled(false);
-        SetStatus(Localization::T(L"status.scanInternalError"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.scanInternalError"), StatusError);
     }
     finally {
         comboBoxDevice->EndUpdate();
@@ -317,14 +322,14 @@ void MainForm::buttonRefresh_Click(System::Object^ sender, System::EventArgs^ e)
 //   Error   — красный (ошибка, нет устройств, нечего записывать),
 //   Neutral — серый (нейтральное состояние).
 // -----------------------------------------------------------------------
-void MainForm::SetStatus(System::String^ text, StatusKind kind)
+void MainForm::SetStatus(System::String^ text, int kind)
 {
     labelStatus->Text = text;
     switch (kind) {
-    case StatusKind::Success:
+    case StatusSuccess:
         labelStatus->ForeColor = System::Drawing::Color::FromArgb(80, 200, 120);
         break;
-    case StatusKind::Error:
+    case StatusError:
         labelStatus->ForeColor = System::Drawing::Color::FromArgb(235, 95, 95);
         break;
     default:
@@ -413,7 +418,7 @@ void MainForm::LoadDeviceData()
     DeviceData data = RegistryEngine::ReadDeviceData(regKey);
 
     if (!data.errorMessage.empty()) {
-        SetStatus(gcnew String(data.errorMessage.c_str()), StatusKind::Error);
+        SetStatus(gcnew String(data.errorMessage.c_str()), StatusError);
         ClearFlagControls();
         return;
     }
@@ -650,17 +655,17 @@ void MainForm::textBoxOemName_KeyPress(System::Object^ sender, System::Windows::
 void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
-    if (sel == nullptr) { SetStatus(Localization::T(L"status.noSelection"), StatusKind::Error); return; }
+    if (sel == nullptr) { SetStatus(Localization::T(L"status.noSelection"), StatusError); return; }
     msclr::interop::marshal_context ctx;
     std::wstring oemKey = ctx.marshal_as<std::wstring>(sel->RegistryKey);
     if (oemKey.empty()) {
-        SetStatus(Localization::T(L"status.noSelection"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.noSelection"), StatusError);
         return;
     }
 
     DeviceData data = RegistryEngine::ReadDeviceData(oemKey);
     if (!data.hasOemData) {
-        SetStatus(Localization::T(L"status.oemDataMissingBackup"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.oemDataMissingBackup"), StatusError);
         return;
     }
 
@@ -668,11 +673,11 @@ void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
     // реестра — кэшированные data.oemName/data.oemDataRaw уже не нужны.
     std::wstring backupPath = BackupManager::WriteBackup(oemKey);
     if (backupPath.empty()) {
-        SetStatus(Localization::T(L"status.backupFailed"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.backupFailed"), StatusError);
         return;
     }
 
-    SetStatus(Localization::T(L"status.backupSaved", gcnew String(backupPath.c_str())), StatusKind::Success);
+    SetStatus(Localization::T(L"status.backupSaved", gcnew String(backupPath.c_str())), StatusSuccess);
 }
 
 // -----------------------------------------------------------------------
@@ -681,40 +686,40 @@ void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
 void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
-    if (sel == nullptr) { SetStatus(Localization::T(L"status.noSelection"), StatusKind::Error); return; }
+    if (sel == nullptr) { SetStatus(Localization::T(L"status.noSelection"), StatusError); return; }
     msclr::interop::marshal_context ctxKey;
     std::wstring oemKey = ctxKey.marshal_as<std::wstring>(sel->RegistryKey);
 
     // Читаем текущее состояние реестра для бэкапа (до изменений).
     DeviceData current = RegistryEngine::ReadDeviceData(oemKey);
     if (!current.hasOemData) {
-        SetStatus(Localization::T(L"status.oemDataMissingApply"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.oemDataMissingApply"), StatusError);
         return;
     }
 
     // Автоматический тихий бэкап перед любой записью — полное поддерево HKCU.
     std::wstring backupPath = BackupManager::WriteBackup(oemKey);
     if (backupPath.empty()) {
-        SetStatus(Localization::T(L"status.backupBeforeApplyFailed"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.backupBeforeApplyFailed"), StatusError);
         return;
     }
 
     // Валидация: поле количества кнопок не должно быть пустым.
     if (textBoxDwNumButtons->Text->Trim()->Length == 0) {
-        SetStatus(Localization::T(L"status.numButtonsEmpty"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.numButtonsEmpty"), StatusError);
         return;
     }
 
     // Валидация: OEMName не может состоять только из пробелов.
     String^ rawName = textBoxOemName->Text;
     if (rawName->Length > 0 && rawName->Trim()->Length == 0) {
-        SetStatus(Localization::T(L"status.oemNameOnlySpaces"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.oemNameOnlySpaces"), StatusError);
         return;
     }
 
     // Собираем новые байты из предпросмотра (они уже отражают текущий UI).
     if (textBoxPreviewData->Text->Length == 0) {
-        SetStatus(Localization::T(L"status.noDataToWrite"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.noDataToWrite"), StatusError);
         return;
     }
 
@@ -729,20 +734,20 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
         try {
             newBytes.push_back(static_cast<BYTE>(Convert::ToByte(tok, 16)));
         } catch (...) {
-            SetStatus(Localization::T(L"status.previewParseError"), StatusKind::Error);
+            SetStatus(Localization::T(L"status.previewParseError"), StatusError);
             return;
         }
     }
 
     if (newBytes.empty()) {
-        SetStatus(Localization::T(L"status.noDataToWrite"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.noDataToWrite"), StatusError);
         return;
     }
 
     // Записываем OEMData.
     LSTATUS st = RegistryEngine::WriteDeviceData(oemKey, newBytes);
     if (st != ERROR_SUCCESS) {
-        SetStatus(Localization::T(L"status.writeOemDataError", st), StatusKind::Error);
+        SetStatus(Localization::T(L"status.writeOemDataError", st), StatusError);
         return;
     }
 
@@ -753,7 +758,7 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
         std::wstring wName = ctxName.marshal_as<std::wstring>(newName);
         st = RegistryEngine::WriteOemName(oemKey, wName);
         if (st != ERROR_SUCCESS) {
-            SetStatus(Localization::T(L"status.writeOemNameAfterDataError", st), StatusKind::Error);
+            SetStatus(Localization::T(L"status.writeOemNameAfterDataError", st), StatusError);
             return;
         }
     }
@@ -761,7 +766,7 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
     // Перечитываем устройство, чтобы снимок совпал с тем, что теперь в реестре.
     LoadDeviceData();
 
-    SetStatus(Localization::T(L"status.applied", gcnew String(backupPath.c_str())), StatusKind::Success);
+    SetStatus(Localization::T(L"status.applied", gcnew String(backupPath.c_str())), StatusSuccess);
 }
 
 // -----------------------------------------------------------------------
@@ -772,13 +777,13 @@ void MainForm::buttonOpenBackups_Click(System::Object^ sender, System::EventArgs
 {
     std::wstring dir = BackupManager::EnsureBackupDir();
     if (dir.empty()) {
-        SetStatus(Localization::T(L"status.backupDirFailed"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.backupDirFailed"), StatusError);
         return;
     }
     // ShellExecute открывает папку в Проводнике без запроса UAC.
     HINSTANCE result = ShellExecuteW(nullptr, L"explore", dir.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     if (reinterpret_cast<INT_PTR>(result) <= 32)
-        SetStatus(Localization::T(L"status.openBackupsFailed"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.openBackupsFailed"), StatusError);
 }
 
 // -----------------------------------------------------------------------
@@ -789,7 +794,7 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
     if (sel == nullptr) {
-        SetStatus(Localization::T(L"status.noSelection"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.noSelection"), StatusError);
         return;
     }
 
@@ -811,7 +816,7 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
     auto parsed = BackupManager::ParseBackupFile(filePath);
     if (!parsed.valid) {
         SetStatus(Localization::T(L"restore.parseError",
-            gcnew String(parsed.errorMessage.c_str())), StatusKind::Error);
+            gcnew String(parsed.errorMessage.c_str())), StatusError);
         return;
     }
 
@@ -835,7 +840,7 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
     // Пишем OEMData из бэкапа.
     LSTATUS st = RegistryEngine::WriteDeviceData(oemKey, parsed.oemDataRaw);
     if (st != ERROR_SUCCESS) {
-        SetStatus(Localization::T(L"status.writeOemDataError", st), StatusKind::Error);
+        SetStatus(Localization::T(L"status.writeOemDataError", st), StatusError);
         return;
     }
 
@@ -843,13 +848,13 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
     if (!parsed.oemName.empty()) {
         st = RegistryEngine::WriteOemName(oemKey, parsed.oemName);
         if (st != ERROR_SUCCESS) {
-            SetStatus(Localization::T(L"restore.writeOemNameError", st), StatusKind::Error);
+            SetStatus(Localization::T(L"restore.writeOemNameError", st), StatusError);
             return;
         }
     }
 
     LoadDeviceData();
-    SetStatus(Localization::T(L"restore.success", dlg->SafeFileName), StatusKind::Success);
+    SetStatus(Localization::T(L"restore.success", dlg->SafeFileName), StatusSuccess);
 }
 
 // -----------------------------------------------------------------------
@@ -914,7 +919,7 @@ void MainForm::buttonApplyNames_Click(System::Object^ sender, System::EventArgs^
 {
     DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
     if (sel == nullptr) {
-        SetStatus(Localization::T(L"status.noSelection"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.noSelection"), StatusError);
         return;
     }
     msclr::interop::marshal_context ctxKey;
@@ -923,14 +928,14 @@ void MainForm::buttonApplyNames_Click(System::Object^ sender, System::EventArgs^
     auto axes    = ReadGridEntries(dataGridAxes);
     auto buttons = ReadGridEntries(dataGridButtons);
     if (axes.empty() && buttons.empty()) {
-        SetStatus(Localization::T(L"status.namesNoData"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.namesNoData"), StatusError);
         return;
     }
 
     // Автобэкап перед записью — полный экспорт поддерева.
     std::wstring backupPath = BackupManager::WriteBackup(oemKey);
     if (backupPath.empty()) {
-        SetStatus(Localization::T(L"status.backupBeforeApplyFailed"), StatusKind::Error);
+        SetStatus(Localization::T(L"status.backupBeforeApplyFailed"), StatusError);
         return;
     }
 
@@ -952,16 +957,16 @@ void MainForm::buttonApplyNames_Click(System::Object^ sender, System::EventArgs^
 
     if (failed > 0 && written == 0) {
         SetStatus(Localization::T(L"status.namesWriteError",
-            (int)lastError), StatusKind::Error);
+            (int)lastError), StatusError);
         return;
     }
     if (failed > 0) {
         // Частичный успех: говорим сколько записано и сколько провалено.
         SetStatus(Localization::T(L"status.namesAppliedPartial",
-            written, failed), StatusKind::Error);
+            written, failed), StatusError);
         return;
     }
-    SetStatus(Localization::T(L"status.namesApplied", written), StatusKind::Success);
+    SetStatus(Localization::T(L"status.namesApplied", written), StatusSuccess);
 }
 
 // -----------------------------------------------------------------------
