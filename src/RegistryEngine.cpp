@@ -264,6 +264,32 @@ LSTATUS WriteOemName(const std::wstring& oemKey,
     return st;
 }
 
+// Удаление одного значения в корневом ключе устройства. Отсутствие значения
+// (ERROR_FILE_NOT_FOUND) — это успех: цель «значения нет» уже достигнута.
+static LSTATUS DeleteRootValue(const std::wstring& oemKey, const wchar_t* valueName)
+{
+    std::wstring fullPath = std::wstring(JOYSTICK_REG_PATH) + L"\\" + oemKey;
+
+    HKEY hKey = nullptr;
+    LSTATUS st = RegOpenKeyExW(HKEY_CURRENT_USER, fullPath.c_str(),
+                               0, KEY_SET_VALUE, &hKey);
+    if (st != ERROR_SUCCESS) return st;
+
+    st = RegDeleteValueW(hKey, valueName);
+    RegCloseKey(hKey);
+    return (st == ERROR_FILE_NOT_FOUND) ? ERROR_SUCCESS : st;
+}
+
+LSTATUS DeleteOemData(const std::wstring& oemKey)
+{
+    return DeleteRootValue(oemKey, L"OEMData");
+}
+
+LSTATUS DeleteOemName(const std::wstring& oemKey)
+{
+    return DeleteRootValue(oemKey, L"OEMName");
+}
+
 // Общая реализация записи имени для Axes\<N> и Buttons\<N>: значение @ типа
 // REG_SZ. Подключ не создаём — если он отсутствует, возвращаем ошибку открытия,
 // чтобы не плодить «фантомные» оси/кнопки, которых нет в драйвере.

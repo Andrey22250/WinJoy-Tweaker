@@ -119,6 +119,12 @@ namespace RegistryEngine {
     LSTATUS WriteOemName(const std::wstring& oemKey,
                          const std::wstring& oemName);
 
+    // Удаление значения OEMData / OEMName (для отката к «пустому» состоянию
+    // при восстановлении бэкапа, в котором этих значений нет). Отсутствие
+    // значения (ERROR_FILE_NOT_FOUND) трактуется как успех.
+    LSTATUS DeleteOemData(const std::wstring& oemKey);
+    LSTATUS DeleteOemName(const std::wstring& oemKey);
+
     // Запись имени оси или кнопки (значение @, REG_SZ) в HKCU.
     // Подключ должен уже существовать — функция НЕ создаёт оси/кнопки,
     // которых нет физически (это могло бы сломать перечисление в драйвере).

@@ -306,8 +306,13 @@ OEMData bytes: {1}</value>
   <data name="restore.success" xml:space="preserve">
     <value>Restored from file: {0}</value>
   </data>
-  <data name="restore.nothingToWrite" xml:space="preserve">
-    <value>The file has no OEMData and no OEMName — nothing to restore.</value>
+  <data name="restore.willDeleteData" xml:space="preserve">
+    <value>OEMData is absent from the backup and will be DELETED from the device (rollback to factory state).
+</value>
+  </data>
+  <data name="restore.willDeleteName" xml:space="preserve">
+    <value>OEMName is absent from the backup and will be DELETED from the device.
+</value>
   </data>
   <data name="restore.invalidLength" xml:space="preserve">
     <value>Invalid OEMData length in file: {0} bytes. Allowed values are 8 or 112 bytes (the hex data may be corrupted by manual editing).</value>

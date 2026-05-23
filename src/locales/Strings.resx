@@ -306,8 +306,13 @@
   <data name="restore.success" xml:space="preserve">
     <value>Восстановлено из файла: {0}</value>
   </data>
-  <data name="restore.nothingToWrite" xml:space="preserve">
-    <value>В файле нет OEMData и OEMName — восстанавливать нечего.</value>
+  <data name="restore.willDeleteData" xml:space="preserve">
+    <value>OEMData отсутствует в бэкапе и будет УДАЛЁН из устройства (откат к заводскому состоянию).
+</value>
+  </data>
+  <data name="restore.willDeleteName" xml:space="preserve">
+    <value>OEMName отсутствует в бэкапе и будет УДАЛЁН из устройства.
+</value>
   </data>
   <data name="restore.invalidLength" xml:space="preserve">
     <value>Некорректная длина OEMData в файле: {0} байт. Допустимо 8 или 112 байт (возможно, hex-данные повреждены при ручном редактировании).</value>

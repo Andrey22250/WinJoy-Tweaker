@@ -447,6 +447,14 @@ void MainForm::RefreshDeviceList()
         _refreshing = false;
         comboBoxDevice->EndUpdate();
     }
+
+    // Предложение создать стоковые параметры показываем ТОЛЬКО после полного
+    // завершения обновления (вне BeginUpdate/EndUpdate и при _refreshing=false).
+    // Иначе для единственного пустого устройства, которое выбирается программно
+    // (SelectedIndex=0), диалог подавлялся бы вместе с программным выбором —
+    // и пользователь так и не получал бы предложение создать параметры.
+    if (OfferCreateStockData())
+        LoadDeviceData();
 }
 
 void MainForm::buttonRefresh_Click(System::Object^ sender, System::EventArgs^ e)
@@ -1042,12 +1050,10 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
         return;
     }
 
-    // #1: восстанавливать нечего, если в файле нет ни OEMData, ни OEMName.
-    // Без этой проверки пустой OEMData затёр бы реальные настройки устройства.
-    if (parsed.oemDataRaw.empty() && parsed.oemName.empty()) {
-        SetStatus(Localization::T(L"restore.nothingToWrite"), StatusError);
-        return;
-    }
+    // Семантика восстановления — точный снимок: значение есть в бэкапе → пишем,
+    // значения нет → УДАЛЯЕМ его из устройства. Пустой бэкап (нет ни OEMData,
+    // ни OEMName) — это валидный откат к заводскому «чистому» состоянию
+    // (например, отмена ранее созданных стоковых параметров).
 
     // Санити-проверка длины OEMData: корректны только 8 байт (hws у современных
     // HID) или 112 (полная JOYREGHWCONFIG). Повреждённый при ручной правке hex
@@ -1080,8 +1086,16 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
         }
     }
 
-    // Подтверждение: восстановление перезапишет текущие настройки устройства.
-    String^ msg = warning + Localization::T(L"restore.confirmText",
+    // Уведомление об удалении: какие значения отсутствуют в бэкапе и потому
+    // будут удалены из устройства (откат к «пустому» состоянию).
+    String^ deleteNotice = String::Empty;
+    if (parsed.oemDataRaw.empty())
+        deleteNotice += Localization::T(L"restore.willDeleteData");
+    if (parsed.oemName.empty())
+        deleteNotice += Localization::T(L"restore.willDeleteName");
+
+    // Подтверждение: восстановление перезапишет/удалит текущие настройки.
+    String^ msg = warning + deleteNotice + Localization::T(L"restore.confirmText",
         gcnew String(parsed.oemName.c_str()),
         hexBuilder->ToString());
 
@@ -1091,23 +1105,22 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
         != System::Windows::Forms::DialogResult::OK)
         return;
 
-    // Пишем OEMData из бэкапа — только если он там есть (#1).
-    LSTATUS st = ERROR_SUCCESS;
-    if (!parsed.oemDataRaw.empty()) {
-        st = RegistryEngine::WriteDeviceData(oemKey, parsed.oemDataRaw);
-        if (st != ERROR_SUCCESS) {
-            SetStatus(Localization::T(L"status.writeOemDataError", st), StatusError);
-            return;
-        }
+    // OEMData: есть в бэкапе → пишем (длина проверена выше); нет → удаляем.
+    LSTATUS st = parsed.oemDataRaw.empty()
+        ? RegistryEngine::DeleteOemData(oemKey)
+        : RegistryEngine::WriteDeviceData(oemKey, parsed.oemDataRaw);
+    if (st != ERROR_SUCCESS) {
+        SetStatus(Localization::T(L"status.writeOemDataError", st), StatusError);
+        return;
     }
 
-    // Пишем OEMName, если он был в файле.
-    if (!parsed.oemName.empty()) {
-        st = RegistryEngine::WriteOemName(oemKey, parsed.oemName);
-        if (st != ERROR_SUCCESS) {
-            SetStatus(Localization::T(L"restore.writeOemNameError", st), StatusError);
-            return;
-        }
+    // OEMName: есть в бэкапе → пишем; нет → удаляем.
+    st = parsed.oemName.empty()
+        ? RegistryEngine::DeleteOemName(oemKey)
+        : RegistryEngine::WriteOemName(oemKey, parsed.oemName);
+    if (st != ERROR_SUCCESS) {
+        SetStatus(Localization::T(L"restore.writeOemNameError", st), StatusError);
+        return;
     }
 
     LoadDeviceData();
