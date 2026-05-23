@@ -240,6 +240,12 @@
   <data name="status.noSelection" xml:space="preserve">
     <value>Нет выбранного устройства.</value>
   </data>
+  <data name="ctx.copy" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="ctx.selectAll" xml:space="preserve">
+    <value>Выделить всё</value>
+  </data>
   <data name="status.oemDataMissingBackup" xml:space="preserve">
     <value>OEMData не найден — бэкап невозможен.</value>
   </data>

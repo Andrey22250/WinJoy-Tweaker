@@ -73,6 +73,72 @@ void MainForm::SwapTabControlToFlat()
 }
 
 // -----------------------------------------------------------------------
+// Поля сырых байт (textBoxRawData) и предпросмотра (textBoxPreviewData) —
+// только для чтения и копирования. Они уже ReadOnly (печатать нельзя), но
+// в них ставится мигающая каретка ввода. Здесь убираем каретку и I-beam,
+// исключаем из Tab-обхода и вешаем контекстное меню «Копировать / Выделить всё».
+// -----------------------------------------------------------------------
+void MainForm::SetupReadOnlyDataFields()
+{
+    array<TextBox^>^ fields = gcnew array<TextBox^> { textBoxRawData, textBoxPreviewData };
+    for each (TextBox^ tb in fields) {
+        tb->TabStop = false;                                  // не получает фокус по Tab
+        tb->Cursor  = System::Windows::Forms::Cursors::Arrow; // стрелка вместо I-beam
+
+        // Контекстное меню: копирование выделенного/всего текста.
+        System::Windows::Forms::ContextMenuStrip^ menu = gcnew System::Windows::Forms::ContextMenuStrip();
+        ToolStripMenuItem^ copyItem = gcnew ToolStripMenuItem(Localization::T(L"ctx.copy"));
+        copyItem->Click += gcnew System::EventHandler(this, &MainForm::dataFieldCopy_Click);
+        ToolStripMenuItem^ selectAllItem = gcnew ToolStripMenuItem(Localization::T(L"ctx.selectAll"));
+        selectAllItem->Click += gcnew System::EventHandler(this, &MainForm::dataFieldSelectAll_Click);
+        menu->Items->Add(copyItem);
+        menu->Items->Add(selectAllItem);
+        tb->ContextMenuStrip = menu;
+
+        // Скрываем каретку при получении фокуса и при кликах мышью.
+        tb->GotFocus  += gcnew System::EventHandler(this, &MainForm::dataField_GotFocus);
+        tb->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::dataField_MouseDown);
+        tb->MouseUp   += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::dataField_MouseDown);
+    }
+}
+
+void MainForm::dataField_GotFocus(System::Object^ sender, System::EventArgs^ e)
+{
+    TextBox^ tb = dynamic_cast<TextBox^>(sender);
+    if (tb != nullptr && tb->IsHandleCreated)
+        ::HideCaret(reinterpret_cast<HWND>(tb->Handle.ToPointer()));
+}
+
+void MainForm::dataField_MouseDown(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e)
+{
+    TextBox^ tb = dynamic_cast<TextBox^>(sender);
+    if (tb != nullptr && tb->IsHandleCreated)
+        ::HideCaret(reinterpret_cast<HWND>(tb->Handle.ToPointer()));
+}
+
+void MainForm::dataFieldCopy_Click(System::Object^ sender, System::EventArgs^ e)
+{
+    ToolStripMenuItem^ item = dynamic_cast<ToolStripMenuItem^>(sender);
+    System::Windows::Forms::ContextMenuStrip^ menu = (item != nullptr) ? dynamic_cast<System::Windows::Forms::ContextMenuStrip^>(item->Owner) : nullptr;
+    TextBox^ tb = (menu != nullptr) ? dynamic_cast<TextBox^>(menu->SourceControl) : nullptr;
+    if (tb == nullptr) return;
+
+    String^ text = (tb->SelectionLength > 0) ? tb->SelectedText : tb->Text;
+    if (!String::IsNullOrEmpty(text))
+        Clipboard::SetText(text);
+}
+
+void MainForm::dataFieldSelectAll_Click(System::Object^ sender, System::EventArgs^ e)
+{
+    ToolStripMenuItem^ item = dynamic_cast<ToolStripMenuItem^>(sender);
+    System::Windows::Forms::ContextMenuStrip^ menu = (item != nullptr) ? dynamic_cast<System::Windows::Forms::ContextMenuStrip^>(item->Owner) : nullptr;
+    TextBox^ tb = (menu != nullptr) ? dynamic_cast<TextBox^>(menu->SourceControl) : nullptr;
+    if (tb == nullptr) return;
+
+    tb->SelectAll();
+}
+
+// -----------------------------------------------------------------------
 // Тёмная тема
 // -----------------------------------------------------------------------
 void MainForm::ApplyDarkTheme()
@@ -251,6 +317,16 @@ void MainForm::ApplyLocalization()
     labelYAxisHeader->Text    = Localization::T(L"label.yAxis");
     labelRawData->Text        = Localization::T(L"label.rawData");
     labelPreviewData->Text    = Localization::T(L"label.previewData");
+
+    // Контекстные меню полей сырых/предпросмотренных байт.
+    array<TextBox^>^ dataFields = gcnew array<TextBox^> { textBoxRawData, textBoxPreviewData };
+    for each (TextBox^ tb in dataFields) {
+        System::Windows::Forms::ContextMenuStrip^ menu = tb->ContextMenuStrip;
+        if (menu != nullptr && menu->Items->Count >= 2) {
+            menu->Items[0]->Text = Localization::T(L"ctx.copy");
+            menu->Items[1]->Text = Localization::T(L"ctx.selectAll");
+        }
+    }
 
     radioGeneric->Text  = Localization::T(L"device.generic");
     radioYoke->Text     = Localization::T(L"device.yoke");

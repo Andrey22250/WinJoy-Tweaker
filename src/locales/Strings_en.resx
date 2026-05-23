@@ -240,6 +240,12 @@
   <data name="status.noSelection" xml:space="preserve">
     <value>No device selected.</value>
   </data>
+  <data name="ctx.copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="ctx.selectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
   <data name="status.oemDataMissingBackup" xml:space="preserve">
     <value>OEMData not found — backup impossible.</value>
   </data>

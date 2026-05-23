@@ -30,6 +30,10 @@ namespace WinJoytweaker {
             // и не ломал дизайнер C++/CLI.
             SwapTabControlToFlat();
 
+            // Поля сырых/предпросмотренных байт — только просмотр и копирование:
+            // прячем каретку, убираем из Tab-обхода, вешаем контекстное меню.
+            SetupReadOnlyDataFields();
+
             // Заполняем переключатель языка и выставляем сохранённое значение
             // ДО подписки на handler, чтобы инициализация не триггерила его.
             comboBoxLanguage->Items->Add(L"Auto / Авто");
@@ -158,6 +162,13 @@ namespace WinJoytweaker {
         void ApplyLocalization();
         // Заменяет tabMain экземпляром FlatTabControl, перенося в него вкладки.
         void SwapTabControlToFlat();
+        // Настраивает поля сырых/предпросмотренных байт как «только чтение и
+        // копирование»: скрытая каретка, без Tab-фокуса, контекстное меню.
+        void SetupReadOnlyDataFields();
+        void dataField_GotFocus(System::Object^ sender, System::EventArgs^ e);
+        void dataField_MouseDown(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e);
+        void dataFieldCopy_Click(System::Object^ sender, System::EventArgs^ e);
+        void dataFieldSelectAll_Click(System::Object^ sender, System::EventArgs^ e);
         void RefreshDeviceList();
         void LoadDeviceData();
         void ClearFlagControls();
