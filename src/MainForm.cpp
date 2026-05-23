@@ -99,6 +99,8 @@ void MainForm::SetupReadOnlyDataFields()
         tb->GotFocus  += gcnew System::EventHandler(this, &MainForm::dataField_GotFocus);
         tb->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::dataField_MouseDown);
         tb->MouseUp   += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::dataField_MouseDown);
+        // Сбрасываем выделение, когда фокус уходит из поля (клик вне поля).
+        tb->Leave     += gcnew System::EventHandler(this, &MainForm::dataField_Leave);
     }
 }
 
@@ -114,6 +116,13 @@ void MainForm::dataField_MouseDown(System::Object^ sender, System::Windows::Form
     TextBox^ tb = dynamic_cast<TextBox^>(sender);
     if (tb != nullptr && tb->IsHandleCreated)
         ::HideCaret(reinterpret_cast<HWND>(tb->Handle.ToPointer()));
+}
+
+void MainForm::dataField_Leave(System::Object^ sender, System::EventArgs^ e)
+{
+    TextBox^ tb = dynamic_cast<TextBox^>(sender);
+    if (tb != nullptr)
+        tb->SelectionLength = 0;  // снимаем выделение при потере фокуса
 }
 
 void MainForm::dataFieldCopy_Click(System::Object^ sender, System::EventArgs^ e)

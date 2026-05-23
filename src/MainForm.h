@@ -167,6 +167,7 @@ namespace WinJoytweaker {
         void SetupReadOnlyDataFields();
         void dataField_GotFocus(System::Object^ sender, System::EventArgs^ e);
         void dataField_MouseDown(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e);
+        void dataField_Leave(System::Object^ sender, System::EventArgs^ e);
         void dataFieldCopy_Click(System::Object^ sender, System::EventArgs^ e);
         void dataFieldSelectAll_Click(System::Object^ sender, System::EventArgs^ e);
         void RefreshDeviceList();
@@ -328,7 +329,7 @@ namespace WinJoytweaker {
             this->rootLayout->Padding = System::Windows::Forms::Padding(28, 8, 28, 30);
             this->rootLayout->RowCount = 11;
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
-            this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 39)));
+            this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 33)));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
@@ -372,7 +373,7 @@ namespace WinJoytweaker {
             this->buttonRefresh->Margin = System::Windows::Forms::Padding(0);
             this->buttonRefresh->MinimumSize = System::Drawing::Size(240, 0);
             this->buttonRefresh->Name = L"buttonRefresh";
-            this->buttonRefresh->Size = System::Drawing::Size(240, 39);
+            this->buttonRefresh->Size = System::Drawing::Size(240, 33);
             this->buttonRefresh->TabIndex = 2;
             this->buttonRefresh->Text = L"Обновить";
             this->buttonRefresh->Click += gcnew System::EventHandler(this, &MainForm::buttonRefresh_Click);
