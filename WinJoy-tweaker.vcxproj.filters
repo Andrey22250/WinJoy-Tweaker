@@ -29,6 +29,9 @@
     <ClInclude Include="src\FlatTabControl.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\DataFieldDeselectFilter.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\RegistryEngine.h">
       <Filter>src</Filter>
     </ClInclude>

@@ -144,6 +144,7 @@
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="src\FlatTabControl.h" />
+    <ClInclude Include="src\DataFieldDeselectFilter.h" />
     <ClInclude Include="src\RegistryEngine.h" />
     <ClInclude Include="src\BackupManager.h" />
     <ClInclude Include="src\locales\Localization.h" />

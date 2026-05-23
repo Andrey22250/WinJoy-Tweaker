@@ -1,5 +1,6 @@
 #include "MainForm.h"
 #include "FlatTabControl.h"
+#include "DataFieldDeselectFilter.h"
 #include "RegistryEngine.h"
 #include "BackupManager.h"
 #include <msclr/marshal.h>
@@ -102,6 +103,11 @@ void MainForm::SetupReadOnlyDataFields()
         // Сбрасываем выделение, когда фокус уходит из поля (клик вне поля).
         tb->Leave     += gcnew System::EventHandler(this, &MainForm::dataField_Leave);
     }
+
+    // Глобальный фильтр: снимает выделение при клике мышью в любом месте окна
+    // вне поля (метки, панели, пустое место — фокус там не меняется, поэтому
+    // Leave не срабатывает). Application держит ссылку на фильтр сам.
+    Application::AddMessageFilter(gcnew DataFieldDeselectFilter(fields));
 }
 
 void MainForm::dataField_GotFocus(System::Object^ sender, System::EventArgs^ e)
