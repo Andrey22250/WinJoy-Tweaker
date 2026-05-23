@@ -282,20 +282,24 @@ void MainForm::RefreshDeviceList()
         }
 
         if (!devices.empty()) {
+            SetControlsEnabled(true);
             comboBoxDevice->SelectedIndex = 0;
             // LoadDeviceData() вызовется автоматически через SelectedIndexChanged
-            labelStatus->Text = Localization::T(L"status.devicesConnected", (int)devices.size());
+            SetStatus(Localization::T(L"status.devicesConnected", (int)devices.size()), StatusKind::Success);
         } else {
             textBoxOemName->Text = String::Empty;
             ClearFlagControls();
-            labelStatus->Text = Localization::T(L"status.noDevices");
+            SetControlsEnabled(false);
+            SetStatus(Localization::T(L"status.noDevices"), StatusKind::Error);
         }
     }
     catch (System::Exception^ ex) {
-        labelStatus->Text = Localization::T(L"status.scanError", ex->Message);
+        SetControlsEnabled(false);
+        SetStatus(Localization::T(L"status.scanError", ex->Message), StatusKind::Error);
     }
     catch (...) {
-        labelStatus->Text = Localization::T(L"status.scanInternalError");
+        SetControlsEnabled(false);
+        SetStatus(Localization::T(L"status.scanInternalError"), StatusKind::Error);
     }
     finally {
         comboBoxDevice->EndUpdate();
@@ -305,6 +309,47 @@ void MainForm::RefreshDeviceList()
 void MainForm::buttonRefresh_Click(System::Object^ sender, System::EventArgs^ e)
 {
     RefreshDeviceList();
+}
+
+// -----------------------------------------------------------------------
+// Вывод сообщения в строку статуса с цветовой индикацией:
+//   Success — зелёный (успешная операция, информация),
+//   Error   — красный (ошибка, нет устройств, нечего записывать),
+//   Neutral — серый (нейтральное состояние).
+// -----------------------------------------------------------------------
+void MainForm::SetStatus(System::String^ text, StatusKind kind)
+{
+    labelStatus->Text = text;
+    switch (kind) {
+    case StatusKind::Success:
+        labelStatus->ForeColor = System::Drawing::Color::FromArgb(80, 200, 120);
+        break;
+    case StatusKind::Error:
+        labelStatus->ForeColor = System::Drawing::Color::FromArgb(235, 95, 95);
+        break;
+    default:
+        labelStatus->ForeColor = System::Drawing::Color::FromArgb(160, 160, 160);
+        break;
+    }
+}
+
+// -----------------------------------------------------------------------
+// Блокировка элементов редактирования, когда нет устройств для настройки.
+// Кнопки «Обновить», «Папка бэкапов», выбор языка и сам список устройств
+// остаются активными.
+// -----------------------------------------------------------------------
+void MainForm::SetControlsEnabled(bool enabled)
+{
+    textBoxOemName->Enabled      = enabled;
+    textBoxDwNumButtons->Enabled = enabled;
+    groupBoxFlags->Enabled       = enabled;
+    buttonApply->Enabled         = enabled;
+    buttonBackup->Enabled        = enabled;
+    buttonRestore->Enabled       = enabled;
+    buttonApplyNames->Enabled    = enabled;
+    buttonReloadNames->Enabled   = enabled;
+    dataGridAxes->Enabled        = enabled;
+    dataGridButtons->Enabled     = enabled;
 }
 
 // -----------------------------------------------------------------------
@@ -368,7 +413,7 @@ void MainForm::LoadDeviceData()
     DeviceData data = RegistryEngine::ReadDeviceData(regKey);
 
     if (!data.errorMessage.empty()) {
-        labelStatus->Text = gcnew String(data.errorMessage.c_str());
+        SetStatus(gcnew String(data.errorMessage.c_str()), StatusKind::Error);
         ClearFlagControls();
         return;
     }
@@ -605,17 +650,17 @@ void MainForm::textBoxOemName_KeyPress(System::Object^ sender, System::Windows::
 void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
-    if (sel == nullptr) { labelStatus->Text = Localization::T(L"status.noSelection"); return; }
+    if (sel == nullptr) { SetStatus(Localization::T(L"status.noSelection"), StatusKind::Error); return; }
     msclr::interop::marshal_context ctx;
     std::wstring oemKey = ctx.marshal_as<std::wstring>(sel->RegistryKey);
     if (oemKey.empty()) {
-        labelStatus->Text = Localization::T(L"status.noSelection");
+        SetStatus(Localization::T(L"status.noSelection"), StatusKind::Error);
         return;
     }
 
     DeviceData data = RegistryEngine::ReadDeviceData(oemKey);
     if (!data.hasOemData) {
-        labelStatus->Text = Localization::T(L"status.oemDataMissingBackup");
+        SetStatus(Localization::T(L"status.oemDataMissingBackup"), StatusKind::Error);
         return;
     }
 
@@ -623,11 +668,11 @@ void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
     // реестра — кэшированные data.oemName/data.oemDataRaw уже не нужны.
     std::wstring backupPath = BackupManager::WriteBackup(oemKey);
     if (backupPath.empty()) {
-        labelStatus->Text = Localization::T(L"status.backupFailed");
+        SetStatus(Localization::T(L"status.backupFailed"), StatusKind::Error);
         return;
     }
 
-    labelStatus->Text = Localization::T(L"status.backupSaved", gcnew String(backupPath.c_str()));
+    SetStatus(Localization::T(L"status.backupSaved", gcnew String(backupPath.c_str())), StatusKind::Success);
 }
 
 // -----------------------------------------------------------------------
@@ -636,40 +681,40 @@ void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
 void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
-    if (sel == nullptr) { labelStatus->Text = Localization::T(L"status.noSelection"); return; }
+    if (sel == nullptr) { SetStatus(Localization::T(L"status.noSelection"), StatusKind::Error); return; }
     msclr::interop::marshal_context ctxKey;
     std::wstring oemKey = ctxKey.marshal_as<std::wstring>(sel->RegistryKey);
 
     // Читаем текущее состояние реестра для бэкапа (до изменений).
     DeviceData current = RegistryEngine::ReadDeviceData(oemKey);
     if (!current.hasOemData) {
-        labelStatus->Text = Localization::T(L"status.oemDataMissingApply");
+        SetStatus(Localization::T(L"status.oemDataMissingApply"), StatusKind::Error);
         return;
     }
 
     // Автоматический тихий бэкап перед любой записью — полное поддерево HKCU.
     std::wstring backupPath = BackupManager::WriteBackup(oemKey);
     if (backupPath.empty()) {
-        labelStatus->Text = Localization::T(L"status.backupBeforeApplyFailed");
+        SetStatus(Localization::T(L"status.backupBeforeApplyFailed"), StatusKind::Error);
         return;
     }
 
     // Валидация: поле количества кнопок не должно быть пустым.
     if (textBoxDwNumButtons->Text->Trim()->Length == 0) {
-        labelStatus->Text = Localization::T(L"status.numButtonsEmpty");
+        SetStatus(Localization::T(L"status.numButtonsEmpty"), StatusKind::Error);
         return;
     }
 
     // Валидация: OEMName не может состоять только из пробелов.
     String^ rawName = textBoxOemName->Text;
     if (rawName->Length > 0 && rawName->Trim()->Length == 0) {
-        labelStatus->Text = Localization::T(L"status.oemNameOnlySpaces");
+        SetStatus(Localization::T(L"status.oemNameOnlySpaces"), StatusKind::Error);
         return;
     }
 
     // Собираем новые байты из предпросмотра (они уже отражают текущий UI).
     if (textBoxPreviewData->Text->Length == 0) {
-        labelStatus->Text = Localization::T(L"status.noDataToWrite");
+        SetStatus(Localization::T(L"status.noDataToWrite"), StatusKind::Error);
         return;
     }
 
@@ -684,20 +729,20 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
         try {
             newBytes.push_back(static_cast<BYTE>(Convert::ToByte(tok, 16)));
         } catch (...) {
-            labelStatus->Text = Localization::T(L"status.previewParseError");
+            SetStatus(Localization::T(L"status.previewParseError"), StatusKind::Error);
             return;
         }
     }
 
     if (newBytes.empty()) {
-        labelStatus->Text = Localization::T(L"status.noDataToWrite");
+        SetStatus(Localization::T(L"status.noDataToWrite"), StatusKind::Error);
         return;
     }
 
     // Записываем OEMData.
     LSTATUS st = RegistryEngine::WriteDeviceData(oemKey, newBytes);
     if (st != ERROR_SUCCESS) {
-        labelStatus->Text = Localization::T(L"status.writeOemDataError", st);
+        SetStatus(Localization::T(L"status.writeOemDataError", st), StatusKind::Error);
         return;
     }
 
@@ -708,7 +753,7 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
         std::wstring wName = ctxName.marshal_as<std::wstring>(newName);
         st = RegistryEngine::WriteOemName(oemKey, wName);
         if (st != ERROR_SUCCESS) {
-            labelStatus->Text = Localization::T(L"status.writeOemNameAfterDataError", st);
+            SetStatus(Localization::T(L"status.writeOemNameAfterDataError", st), StatusKind::Error);
             return;
         }
     }
@@ -716,7 +761,7 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
     // Перечитываем устройство, чтобы снимок совпал с тем, что теперь в реестре.
     LoadDeviceData();
 
-    labelStatus->Text = Localization::T(L"status.applied", gcnew String(backupPath.c_str()));
+    SetStatus(Localization::T(L"status.applied", gcnew String(backupPath.c_str())), StatusKind::Success);
 }
 
 // -----------------------------------------------------------------------
@@ -727,13 +772,13 @@ void MainForm::buttonOpenBackups_Click(System::Object^ sender, System::EventArgs
 {
     std::wstring dir = BackupManager::EnsureBackupDir();
     if (dir.empty()) {
-        labelStatus->Text = Localization::T(L"status.backupDirFailed");
+        SetStatus(Localization::T(L"status.backupDirFailed"), StatusKind::Error);
         return;
     }
     // ShellExecute открывает папку в Проводнике без запроса UAC.
     HINSTANCE result = ShellExecuteW(nullptr, L"explore", dir.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     if (reinterpret_cast<INT_PTR>(result) <= 32)
-        labelStatus->Text = Localization::T(L"status.openBackupsFailed");
+        SetStatus(Localization::T(L"status.openBackupsFailed"), StatusKind::Error);
 }
 
 // -----------------------------------------------------------------------
@@ -744,7 +789,7 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
     if (sel == nullptr) {
-        labelStatus->Text = Localization::T(L"status.noSelection");
+        SetStatus(Localization::T(L"status.noSelection"), StatusKind::Error);
         return;
     }
 
@@ -765,8 +810,8 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
     std::wstring filePath = ctx.marshal_as<std::wstring>(dlg->FileName);
     auto parsed = BackupManager::ParseBackupFile(filePath);
     if (!parsed.valid) {
-        labelStatus->Text = Localization::T(L"restore.parseError",
-            gcnew String(parsed.errorMessage.c_str()));
+        SetStatus(Localization::T(L"restore.parseError",
+            gcnew String(parsed.errorMessage.c_str())), StatusKind::Error);
         return;
     }
 
@@ -790,7 +835,7 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
     // Пишем OEMData из бэкапа.
     LSTATUS st = RegistryEngine::WriteDeviceData(oemKey, parsed.oemDataRaw);
     if (st != ERROR_SUCCESS) {
-        labelStatus->Text = Localization::T(L"status.writeOemDataError", st);
+        SetStatus(Localization::T(L"status.writeOemDataError", st), StatusKind::Error);
         return;
     }
 
@@ -798,13 +843,13 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
     if (!parsed.oemName.empty()) {
         st = RegistryEngine::WriteOemName(oemKey, parsed.oemName);
         if (st != ERROR_SUCCESS) {
-            labelStatus->Text = Localization::T(L"restore.writeOemNameError", st);
+            SetStatus(Localization::T(L"restore.writeOemNameError", st), StatusKind::Error);
             return;
         }
     }
 
     LoadDeviceData();
-    labelStatus->Text = Localization::T(L"restore.success", dlg->SafeFileName);
+    SetStatus(Localization::T(L"restore.success", dlg->SafeFileName), StatusKind::Success);
 }
 
 // -----------------------------------------------------------------------
@@ -869,7 +914,7 @@ void MainForm::buttonApplyNames_Click(System::Object^ sender, System::EventArgs^
 {
     DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
     if (sel == nullptr) {
-        labelStatus->Text = Localization::T(L"status.noSelection");
+        SetStatus(Localization::T(L"status.noSelection"), StatusKind::Error);
         return;
     }
     msclr::interop::marshal_context ctxKey;
@@ -878,14 +923,14 @@ void MainForm::buttonApplyNames_Click(System::Object^ sender, System::EventArgs^
     auto axes    = ReadGridEntries(dataGridAxes);
     auto buttons = ReadGridEntries(dataGridButtons);
     if (axes.empty() && buttons.empty()) {
-        labelStatus->Text = Localization::T(L"status.namesNoData");
+        SetStatus(Localization::T(L"status.namesNoData"), StatusKind::Error);
         return;
     }
 
     // Автобэкап перед записью — полный экспорт поддерева.
     std::wstring backupPath = BackupManager::WriteBackup(oemKey);
     if (backupPath.empty()) {
-        labelStatus->Text = Localization::T(L"status.backupBeforeApplyFailed");
+        SetStatus(Localization::T(L"status.backupBeforeApplyFailed"), StatusKind::Error);
         return;
     }
 
@@ -906,17 +951,17 @@ void MainForm::buttonApplyNames_Click(System::Object^ sender, System::EventArgs^
     }
 
     if (failed > 0 && written == 0) {
-        labelStatus->Text = Localization::T(L"status.namesWriteError",
-            (int)lastError);
+        SetStatus(Localization::T(L"status.namesWriteError",
+            (int)lastError), StatusKind::Error);
         return;
     }
     if (failed > 0) {
         // Частичный успех: говорим сколько записано и сколько провалено.
-        labelStatus->Text = Localization::T(L"status.namesAppliedPartial",
-            written, failed);
+        SetStatus(Localization::T(L"status.namesAppliedPartial",
+            written, failed), StatusKind::Error);
         return;
     }
-    labelStatus->Text = Localization::T(L"status.namesApplied", written);
+    SetStatus(Localization::T(L"status.namesApplied", written), StatusKind::Success);
 }
 
 // -----------------------------------------------------------------------

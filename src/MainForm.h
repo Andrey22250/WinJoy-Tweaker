@@ -191,6 +191,12 @@ namespace WinJoytweaker {
         void RefreshDeviceList();
         void LoadDeviceData();
         void ClearFlagControls();
+
+        // Тип сообщения в строке статуса — определяет цвет текста.
+        enum class StatusKind { Neutral, Success, Error };
+        void SetStatus(System::String^ text, StatusKind kind);
+        // Блокировка/разблокировка элементов редактирования (нет устройств → false).
+        void SetControlsEnabled(bool enabled);
         void UpdatePreviewData();
         void flagsControl_Changed(System::Object^ sender, System::EventArgs^ e);
         void checkHasPov_CheckedChanged(System::Object^ sender, System::EventArgs^ e);
