@@ -1104,16 +1104,14 @@ namespace WinJoytweaker {
             // 
             // panelAxesButtons
             // 
-            this->panelAxesButtons->ColumnCount = 3;
+            this->panelAxesButtons->ColumnCount = 2;
             this->layoutAxesTab->SetColumnSpan(this->panelAxesButtons, 2);
             this->panelAxesButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent,
-                100)));
-            this->panelAxesButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Absolute,
-                240)));
-            this->panelAxesButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Absolute,
-                240)));
-            this->panelAxesButtons->Controls->Add(this->buttonReloadNames, 1, 0);
-            this->panelAxesButtons->Controls->Add(this->buttonApplyNames, 2, 0);
+                50)));
+            this->panelAxesButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent,
+                50)));
+            this->panelAxesButtons->Controls->Add(this->buttonReloadNames, 0, 0);
+            this->panelAxesButtons->Controls->Add(this->buttonApplyNames, 1, 0);
             this->panelAxesButtons->Dock = System::Windows::Forms::DockStyle::Fill;
             this->panelAxesButtons->Location = System::Drawing::Point(0, 920);
             this->panelAxesButtons->Margin = System::Windows::Forms::Padding(0);
@@ -1125,9 +1123,9 @@ namespace WinJoytweaker {
             // 
             // buttonReloadNames
             // 
-            this->buttonReloadNames->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->buttonReloadNames->Location = System::Drawing::Point(752, 12);
-            this->buttonReloadNames->Margin = System::Windows::Forms::Padding(0, 12, 12, 12);
+            this->buttonReloadNames->Anchor = System::Windows::Forms::AnchorStyles::None;
+            this->buttonReloadNames->Location = System::Drawing::Point(194, 12);
+            this->buttonReloadNames->Margin = System::Windows::Forms::Padding(12);
             this->buttonReloadNames->Name = L"buttonReloadNames";
             this->buttonReloadNames->Size = System::Drawing::Size(228, 46);
             this->buttonReloadNames->TabIndex = 41;
@@ -1136,9 +1134,9 @@ namespace WinJoytweaker {
             // 
             // buttonApplyNames
             // 
-            this->buttonApplyNames->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->buttonApplyNames->Location = System::Drawing::Point(1004, 12);
-            this->buttonApplyNames->Margin = System::Windows::Forms::Padding(12, 12, 0, 12);
+            this->buttonApplyNames->Anchor = System::Windows::Forms::AnchorStyles::None;
+            this->buttonApplyNames->Location = System::Drawing::Point(810, 12);
+            this->buttonApplyNames->Margin = System::Windows::Forms::Padding(12);
             this->buttonApplyNames->Name = L"buttonApplyNames";
             this->buttonApplyNames->Size = System::Drawing::Size(228, 46);
             this->buttonApplyNames->TabIndex = 42;
