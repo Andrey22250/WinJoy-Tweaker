@@ -250,7 +250,7 @@
     <value>OEMData не найден — бэкап невозможен.</value>
   </data>
   <data name="status.backupFailed" xml:space="preserve">
-    <value>Ошибка: не удалось создать файл бэкапа.</value>
+    <value>Ошибка: не удалось создать файл бэкапа. Проверьте свободное место на диске.</value>
   </data>
   <data name="status.backupSaved" xml:space="preserve">
     <value>Бэкап сохранён: {0}</value>
@@ -259,7 +259,7 @@
     <value>OEMData не найден — применение отменено.</value>
   </data>
   <data name="status.backupBeforeApplyFailed" xml:space="preserve">
-    <value>Ошибка: не удалось создать бэкап. Изменения не записаны.</value>
+    <value>Ошибка: не удалось создать бэкап (возможно, нет места на диске). Изменения не записаны.</value>
   </data>
   <data name="status.noDataToWrite" xml:space="preserve">
     <value>Нет данных для записи.</value>
@@ -333,7 +333,7 @@
     <value>Созданы стоковые параметры. Бэкап: {0}</value>
   </data>
   <data name="create.backupFailed" xml:space="preserve">
-    <value>Не удалось сделать бэкап перед созданием параметров.</value>
+    <value>Не удалось сделать бэкап перед созданием параметров (проверьте место на диске).</value>
   </data>
   <data name="create.writeDataError" xml:space="preserve">
     <value>Ошибка записи OEMData (код: {0}).</value>

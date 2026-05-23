@@ -108,16 +108,37 @@ static std::wstring EscapeRegString(const std::wstring& s)
     return out;
 }
 
+// Обёртка над WriteFile, отслеживающая ошибки записи. Любой сбой WriteFile
+// или неполная запись (например, переполнение диска C:) переводит ok в false,
+// после чего все последующие write() — no-op. По завершении WriteBackup
+// проверяет ok: если запись не удалась, неполный .reg удаляется, а функция
+// возвращает "" — вызывающий код не станет менять реестр без валидного бэкапа.
+struct RegFileWriter {
+    HANDLE h;
+    bool   ok = true;
+
+    void write(const std::wstring& s) {
+        if (!ok) return;
+        const DWORD want = static_cast<DWORD>(s.size() * sizeof(wchar_t));
+        DWORD got = 0;
+        if (!WriteFile(h, s.c_str(), want, &got, nullptr) || got != want)
+            ok = false;
+    }
+
+    void writeRaw(const void* data, DWORD bytes) {
+        if (!ok) return;
+        DWORD got = 0;
+        if (!WriteFile(h, data, bytes, &got, nullptr) || got != bytes)
+            ok = false;
+    }
+};
+
 // Сериализация бинарного блока в формате hex:XX,XX,...,XX. Перенос длинных
 // строк через '\' для совместимости с regedit (>1024 символов в строке
 // regedit не любит; делим по 16 байт).
-static void WriteHexBlob(HANDLE hFile, const BYTE* data, DWORD size)
+static void WriteHexBlob(RegFileWriter& w, const BYTE* data, DWORD size)
 {
-    auto writeW = [&](const std::wstring& s) {
-        DWORD w = 0;
-        WriteFile(hFile, s.c_str(),
-                  static_cast<DWORD>(s.size() * sizeof(wchar_t)), &w, nullptr);
-    };
+    auto writeW = [&](const std::wstring& s) { w.write(s); };
 
     for (DWORD i = 0; i < size; ++i) {
         wchar_t hex[4] = {};
@@ -133,14 +154,10 @@ static void WriteHexBlob(HANDLE hFile, const BYTE* data, DWORD size)
 
 // Дамп одного ключа: заголовок [полный\путь] + все значения. Подключи
 // обходятся снаружи рекурсивно.
-static void DumpKeyValues(HANDLE hFile, HKEY hKey,
+static void DumpKeyValues(RegFileWriter& fw, HKEY hKey,
                           const std::wstring& fullDisplayPath)
 {
-    auto writeW = [&](const std::wstring& s) {
-        DWORD w = 0;
-        WriteFile(hFile, s.c_str(),
-                  static_cast<DWORD>(s.size() * sizeof(wchar_t)), &w, nullptr);
-    };
+    auto writeW = [&](const std::wstring& s) { fw.write(s); };
 
     writeW(L"[" + fullDisplayPath + L"]\r\n");
 
@@ -189,7 +206,7 @@ static void DumpKeyValues(HANDLE hFile, HKEY hKey,
         }
         case REG_BINARY: {
             writeW(nameTok + L"=hex:");
-            WriteHexBlob(hFile, buffer.data(), dataSize);
+            WriteHexBlob(fw, buffer.data(), dataSize);
             writeW(L"\r\n");
             break;
         }
@@ -198,7 +215,7 @@ static void DumpKeyValues(HANDLE hFile, HKEY hKey,
             wchar_t tp[8] = {};
             swprintf_s(tp, L"%x", type);
             writeW(nameTok + L"=hex(" + tp + L"):");
-            WriteHexBlob(hFile, buffer.data(), dataSize);
+            WriteHexBlob(fw, buffer.data(), dataSize);
             writeW(L"\r\n");
             break;
         }
@@ -208,15 +225,11 @@ static void DumpKeyValues(HANDLE hFile, HKEY hKey,
 
 // Рекурсивный обход поддерева. После каждого ключа выводим пустую строку
 // — таков обычный формат regedit-экспорта.
-static void DumpSubtreeRec(HANDLE hFile, HKEY hKey,
+static void DumpSubtreeRec(RegFileWriter& fw, HKEY hKey,
                            const std::wstring& fullDisplayPath)
 {
-    DumpKeyValues(hFile, hKey, fullDisplayPath);
-    {
-        DWORD w = 0;
-        const wchar_t* crlf = L"\r\n";
-        WriteFile(hFile, crlf, 2 * sizeof(wchar_t), &w, nullptr);
-    }
+    DumpKeyValues(fw, hKey, fullDisplayPath);
+    fw.write(L"\r\n");
 
     // Сначала собираем все имена подключей, потом обходим — на случай если
     // в процессе чтения индексы поедут (теоретически — не должны на HKCU).
@@ -236,7 +249,7 @@ static void DumpSubtreeRec(HANDLE hFile, HKEY hKey,
         HKEY hChild = nullptr;
         if (RegOpenKeyExW(hKey, sub.c_str(), 0, KEY_READ, &hChild) != ERROR_SUCCESS)
             continue;
-        DumpSubtreeRec(hFile, hChild, fullDisplayPath + L"\\" + sub);
+        DumpSubtreeRec(fw, hChild, fullDisplayPath + L"\\" + sub);
         RegCloseKey(hChild);
     }
 }
@@ -277,23 +290,29 @@ std::wstring WriteBackup(const std::wstring& oemKey,
         return L"";
     }
 
-    auto writeW = [&](const std::wstring& s) {
-        DWORD w = 0;
-        WriteFile(hFile, s.c_str(),
-                  static_cast<DWORD>(s.size() * sizeof(wchar_t)), &w, nullptr);
-    };
+    RegFileWriter fw{ hFile };
 
     // BOM (0xFEFF) — обязателен для формата «Version 5.00».
     const wchar_t bom = L'\xFEFF';
-    DWORD written = 0;
-    WriteFile(hFile, &bom, sizeof(wchar_t), &written, nullptr);
-    writeW(L"Windows Registry Editor Version 5.00\r\n\r\n");
+    fw.writeRaw(&bom, sizeof(wchar_t));
+    fw.write(L"Windows Registry Editor Version 5.00\r\n\r\n");
 
     std::wstring rootDisplay = std::wstring(JOYSTICK_REG_HKCU_PREFIX) + L"\\" + oemKey;
-    DumpSubtreeRec(hFile, hKey, rootDisplay);
+    DumpSubtreeRec(fw, hKey, rootDisplay);
+
+    // Финальный flush на диск — чтобы переполнение/ошибка проявились здесь,
+    // а не позже. Если что-то не записалось (например, кончилось место на C:),
+    // удаляем неполный файл и сигнализируем провал пустой строкой.
+    if (fw.ok && !FlushFileBuffers(hFile))
+        fw.ok = false;
 
     CloseHandle(hFile);
     RegCloseKey(hKey);
+
+    if (!fw.ok) {
+        DeleteFileW(filePath.c_str());
+        return L"";
+    }
 
     RotateBackups(dir, safeKey);
     return filePath;

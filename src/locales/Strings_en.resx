@@ -250,7 +250,7 @@
     <value>OEMData not found — backup impossible.</value>
   </data>
   <data name="status.backupFailed" xml:space="preserve">
-    <value>Error: failed to create backup file.</value>
+    <value>Error: failed to create backup file. Check free disk space.</value>
   </data>
   <data name="status.backupSaved" xml:space="preserve">
     <value>Backup saved: {0}</value>
@@ -259,7 +259,7 @@
     <value>OEMData not found — apply cancelled.</value>
   </data>
   <data name="status.backupBeforeApplyFailed" xml:space="preserve">
-    <value>Error: failed to create backup. Changes not written.</value>
+    <value>Error: failed to create backup (possibly out of disk space). Changes not written.</value>
   </data>
   <data name="status.noDataToWrite" xml:space="preserve">
     <value>No data to write.</value>
@@ -333,7 +333,7 @@ After creation you can edit and apply them.</value>
     <value>Stock parameters created. Backup: {0}</value>
   </data>
   <data name="create.backupFailed" xml:space="preserve">
-    <value>Failed to back up before creating parameters.</value>
+    <value>Failed to back up before creating parameters (check disk space).</value>
   </data>
   <data name="create.writeDataError" xml:space="preserve">
     <value>OEMData write error (code: {0}).</value>
