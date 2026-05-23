@@ -1124,10 +1124,10 @@ namespace WinJoytweaker {
             // buttonReloadNames
             // 
             this->buttonReloadNames->Anchor = System::Windows::Forms::AnchorStyles::None;
-            this->buttonReloadNames->Location = System::Drawing::Point(194, 12);
+            this->buttonReloadNames->Location = System::Drawing::Point(148, 12);
             this->buttonReloadNames->Margin = System::Windows::Forms::Padding(12);
             this->buttonReloadNames->Name = L"buttonReloadNames";
-            this->buttonReloadNames->Size = System::Drawing::Size(228, 46);
+            this->buttonReloadNames->Size = System::Drawing::Size(320, 46);
             this->buttonReloadNames->TabIndex = 41;
             this->buttonReloadNames->Text = L"Перечитать";
             this->buttonReloadNames->Click += gcnew System::EventHandler(this, &MainForm::buttonReloadNames_Click);
@@ -1135,10 +1135,10 @@ namespace WinJoytweaker {
             // buttonApplyNames
             // 
             this->buttonApplyNames->Anchor = System::Windows::Forms::AnchorStyles::None;
-            this->buttonApplyNames->Location = System::Drawing::Point(810, 12);
+            this->buttonApplyNames->Location = System::Drawing::Point(764, 12);
             this->buttonApplyNames->Margin = System::Windows::Forms::Padding(12);
             this->buttonApplyNames->Name = L"buttonApplyNames";
-            this->buttonApplyNames->Size = System::Drawing::Size(228, 46);
+            this->buttonApplyNames->Size = System::Drawing::Size(320, 46);
             this->buttonApplyNames->TabIndex = 42;
             this->buttonApplyNames->Text = L"Применить имена";
             this->buttonApplyNames->Click += gcnew System::EventHandler(this, &MainForm::buttonApplyNames_Click);
