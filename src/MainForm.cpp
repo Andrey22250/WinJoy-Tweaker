@@ -1,4 +1,5 @@
 #include "MainForm.h"
+#include "FlatTabControl.h"
 #include "RegistryEngine.h"
 #include "BackupManager.h"
 #include <msclr/marshal.h>
@@ -26,6 +27,50 @@ ref struct DeviceInfo {
     DeviceInfo(String^ dn, String^ rk) : DisplayName(dn), RegistryKey(rk) {}
     virtual String^ ToString() override { return DisplayName; }
 };
+
+// -----------------------------------------------------------------------
+// Подмена стандартного tabMain на FlatTabControl.
+// InitializeComponent создаёт обычный TabControl (чтобы дизайнер открывался);
+// здесь мы переносим в FlatTabControl все вкладки и ключевые свойства и
+// ставим его на место исходного в дереве контролов.
+// -----------------------------------------------------------------------
+void MainForm::SwapTabControlToFlat()
+{
+    if (tabMain == nullptr) return;
+
+    FlatTabControl^ flat = gcnew FlatTabControl();
+    flat->Name          = tabMain->Name;
+    flat->Dock          = tabMain->Dock;
+    flat->Location      = tabMain->Location;
+    flat->Size          = tabMain->Size;
+    flat->TabIndex      = tabMain->TabIndex;
+    flat->Font          = tabMain->Font;
+
+    // Переносим страницы из старого TabControl в новый.
+    int pageCount = tabMain->TabPages->Count;
+    array<System::Windows::Forms::TabPage^>^ pages =
+        gcnew array<System::Windows::Forms::TabPage^>(pageCount);
+    for (int i = 0; i < pageCount; ++i)
+        pages[i] = tabMain->TabPages[i];
+    tabMain->TabPages->Clear();
+    flat->TabPages->AddRange(pages);
+
+    // Ставим flat на ту же позицию в коллекции контролов родителя.
+    System::Windows::Forms::Control^ parent = tabMain->Parent;
+    int idx = parent->Controls->GetChildIndex(tabMain);
+    parent->Controls->Remove(tabMain);
+    parent->Controls->Add(flat);
+    parent->Controls->SetChildIndex(flat, idx);
+
+    delete tabMain;
+    tabMain = flat;
+
+    if (flat->TabPages->Count > 0)
+        flat->SelectedIndex = 0;
+
+    // Переключатель языка должен оставаться поверх вкладок.
+    comboBoxLanguage->BringToFront();
+}
 
 // -----------------------------------------------------------------------
 // Тёмная тема

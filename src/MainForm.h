@@ -15,51 +15,6 @@ namespace WinJoytweaker {
     using namespace System::Data;
     using namespace System::Drawing;
 
-    // TabControl, который после системной отрисовки закрашивает левую,
-    // правую и нижнюю кромки цветом фона родителя. Событие Paint у
-    // TabControl на этих участках не вызывается, поэтому единственный
-    // надёжный путь — перехватить WM_PAINT в WndProc и дорисовать поверх
-    // через CreateGraphics() после Base::WndProc.
-    //
-    // Должен оставаться в этом же файле: CodeDOM-парсер дизайнера C++/CLI
-    // видит типы только в файле формы и во внешних сборках — тип из другого
-    // заголовка того же проекта он не резолвит («Unknown type»).
-    public ref class FlatTabControl : public System::Windows::Forms::TabControl
-    {
-    public:
-        // Толщина перекрытия в пикселях (одинакова для всех трёх кромок).
-        property int BorderOverlay;
-
-        FlatTabControl() { BorderOverlay = 6; }
-
-    protected:
-        virtual void WndProc(System::Windows::Forms::Message% m) override
-        {
-            const int WM_PAINT = 0x000F;
-            System::Windows::Forms::TabControl::WndProc(m);
-            if (m.Msg != WM_PAINT) return;
-
-            System::Drawing::Graphics^ g = this->CreateGraphics();
-            try {
-                System::Drawing::Color bg = (this->Parent != nullptr)
-                    ? this->Parent->BackColor
-                    : this->BackColor;
-                System::Drawing::SolidBrush^ br = gcnew System::Drawing::SolidBrush(bg);
-                try {
-                    int tabStripH = this->ItemSize.Height + 4;
-                    int w = this->ClientSize.Width;
-                    int h = this->ClientSize.Height;
-                    int t = BorderOverlay;
-                    g->FillRectangle(br, 0,     tabStripH, t, h - tabStripH);
-                    g->FillRectangle(br, w - t, tabStripH, t, h - tabStripH);
-                    g->FillRectangle(br, 0,     h - t,     w, t);
-                }
-                finally { delete br; }
-            }
-            finally { delete g; }
-        }
-    };
-
     /// <summary>
     /// Главное окно WinJoy Tweaker
     /// </summary>
@@ -69,6 +24,11 @@ namespace WinJoytweaker {
         MainForm(void)
         {
             InitializeComponent();
+
+            // Подменяем стандартный TabControl на FlatTabControl (скрытие кромок).
+            // Делается в рантайме, чтобы кастомный тип не попадал в файл формы
+            // и не ломал дизайнер C++/CLI.
+            SwapTabControlToFlat();
 
             // Заполняем переключатель языка и выставляем сохранённое значение
             // ДО подписки на handler, чтобы инициализация не триггерила его.
@@ -166,7 +126,11 @@ namespace WinJoytweaker {
         // Корневой контейнер формы — TabControl с двумя страницами:
         //   tabPageOem   — параметры OEMData (всё прежнее содержимое rootLayout)
         //   tabPageAxes  — редактор имён осей и кнопок (Axes\<N>\@, Buttons\<N>\@)
-        WinJoytweaker::FlatTabControl^              tabMain;
+        // Стандартный TabControl для дизайнера; в рантайме конструктор
+        // подменяет его на FlatTabControl (SwapTabControlToFlat) ради скрытия
+        // кромок. Кастомный тип НЕ упоминается в этом файле — иначе дизайнер
+        // C++/CLI не открывает форму.
+        System::Windows::Forms::TabControl^         tabMain;
         System::Windows::Forms::TabPage^            tabPageOem;
         System::Windows::Forms::TabPage^            tabPageAxes;
 
@@ -192,6 +156,8 @@ namespace WinJoytweaker {
 
         void ApplyDarkTheme();
         void ApplyLocalization();
+        // Заменяет tabMain экземпляром FlatTabControl, перенося в него вкладки.
+        void SwapTabControlToFlat();
         void RefreshDeviceList();
         void LoadDeviceData();
         void ClearFlagControls();
@@ -293,7 +259,7 @@ namespace WinJoytweaker {
             this->refreshDebounceTimer = (gcnew System::Windows::Forms::Timer(this->components));
             this->toolTipOemName = (gcnew System::Windows::Forms::ToolTip(this->components));
             this->comboBoxLanguage = (gcnew System::Windows::Forms::ComboBox());
-            this->tabMain = (gcnew WinJoytweaker::FlatTabControl());
+            this->tabMain = (gcnew System::Windows::Forms::TabControl());
             this->tabPageOem = (gcnew System::Windows::Forms::TabPage());
             this->tabPageAxes = (gcnew System::Windows::Forms::TabPage());
             this->layoutAxesTab = (gcnew System::Windows::Forms::TableLayoutPanel());
