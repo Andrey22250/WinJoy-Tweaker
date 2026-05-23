@@ -15,6 +15,7 @@
 
 // Результат разбора .reg-файла бэкапа.
 struct BackupParseResult {
+    std::wstring             deviceKey;     // VID_xxxx&PID_yyyy из заголовка корневого ключа
     std::wstring             oemName;
     std::vector<BYTE>        oemDataRaw;
     std::vector<NamedEntry>  axes;          // имена осей из подключей Axes\<N>
@@ -25,8 +26,10 @@ struct BackupParseResult {
 
 namespace BackupManager {
 
-    // Максимальное число .reg-файлов в папке бэкапов; старые удаляются.
-    constexpr size_t MAX_BACKUPS = 15;
+    // Максимальное число .reg-файлов НА ОДНО устройство; старые удаляются.
+    // Ротация привязана к ключу устройства — бэкапы разных устройств
+    // не вытесняют друг друга.
+    constexpr size_t MAX_BACKUPS = 10;
 
     // Создаёт %APPDATA%\WinJoyTweaker\backups и возвращает путь,
     // либо пустую строку при ошибке.
@@ -37,8 +40,8 @@ namespace BackupManager {
     // ключа (OEMName/OEMData/...) и все подключи рекурсивно (Axes, Buttons,
     // OEMForceFeedback). Читает свежее состояние из реестра.
     //
-    // Возвращает путь к файлу или "" при ошибке. После записи ротирует папку
-    // бэкапов (max MAX_BACKUPS файлов).
+    // Возвращает путь к файлу или "" при ошибке. После записи ротирует бэкапы
+    // ЭТОГО устройства (max MAX_BACKUPS файлов на устройство).
     std::wstring WriteBackup(const std::wstring& oemKey,
                              const std::wstring& outDir = L"");
 

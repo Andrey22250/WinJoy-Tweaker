@@ -295,7 +295,7 @@
     <value>Восстановление из бэкапа</value>
   </data>
   <data name="restore.confirmText" xml:space="preserve">
-    <value>Восстановить значения из файла во ВЫБРАННОЕ устройство?
+    <value>Восстановить значения из файла в ВЫБРАННОЕ устройство?
 
 Имя из бэкапа: {0}
 Байты OEMData: {1}</value>
@@ -305,6 +305,41 @@
   </data>
   <data name="restore.success" xml:space="preserve">
     <value>Восстановлено из файла: {0}</value>
+  </data>
+  <data name="restore.nothingToWrite" xml:space="preserve">
+    <value>В файле нет OEMData и OEMName — восстанавливать нечего.</value>
+  </data>
+  <data name="restore.invalidLength" xml:space="preserve">
+    <value>Некорректная длина OEMData в файле: {0} байт. Допустимо 8 или 112 байт (возможно, hex-данные повреждены при ручном редактировании).</value>
+  </data>
+  <data name="restore.crossDeviceWarning" xml:space="preserve">
+    <value>ВНИМАНИЕ: бэкап сделан с другого устройства ({0}), а выбрано {1}.
+Настройки одного устройства будут записаны в другое.
+
+</value>
+  </data>
+  <data name="create.offerTitle" xml:space="preserve">
+    <value>Создать параметры устройства</value>
+  </data>
+  <data name="create.offerText" xml:space="preserve">
+    <value>У этого устройства нет параметров OEMName и OEMData.
+
+Создать стоковые значения?
+Имя: "Controller", обычный джойстик, 32 кнопки, все оси (Z, R, U, V, POV).
+
+После создания их можно будет отредактировать и применить.</value>
+  </data>
+  <data name="create.success" xml:space="preserve">
+    <value>Созданы стоковые параметры. Бэкап: {0}</value>
+  </data>
+  <data name="create.backupFailed" xml:space="preserve">
+    <value>Не удалось сделать бэкап перед созданием параметров.</value>
+  </data>
+  <data name="create.writeDataError" xml:space="preserve">
+    <value>Ошибка записи OEMData (код: {0}).</value>
+  </data>
+  <data name="create.writeNameError" xml:space="preserve">
+    <value>OEMData создан. Ошибка записи OEMName (код: {0}).</value>
   </data>
   <data name="error.openRegistryKey" xml:space="preserve">
     <value>Не удалось открыть ключ реестра (код: {0})</value>

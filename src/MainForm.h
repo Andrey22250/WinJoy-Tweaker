@@ -25,6 +25,8 @@ namespace WinJoytweaker {
         {
             InitializeComponent();
 
+            _declinedCreate = gcnew System::Collections::Generic::List<System::String^>();
+
             // Подменяем стандартный TabControl на FlatTabControl (скрытие кромок).
             // Делается в рантайме, чтобы кастомный тип не попадал в файл формы
             // и не ломал дизайнер C++/CLI.
@@ -155,6 +157,15 @@ namespace WinJoytweaker {
         // Снимок оригинальных байт OEMData — основа для предпросмотра изменений.
         array<System::Byte>^                       _oemDataSnapshot;
 
+        // Ключи устройств, для которых пользователь уже отказался создавать
+        // стоковые параметры — чтобы не предлагать повторно в рамках сессии.
+        System::Collections::Generic::List<System::String^>^ _declinedCreate;
+
+        // true во время RefreshDeviceList: программная установка SelectedIndex
+        // синхронно дёргает SelectedIndexChanged, и без этого флага диалог
+        // создания параметров выскакивал бы при каждом авто-обновлении списка.
+        bool _refreshing;
+
         // Tooltip для подсказок о правилах ввода (OEMName и др.).
         System::Windows::Forms::ToolTip^            toolTipOemName;
 
@@ -172,6 +183,9 @@ namespace WinJoytweaker {
         void dataFieldSelectAll_Click(System::Object^ sender, System::EventArgs^ e);
         void RefreshDeviceList();
         void LoadDeviceData();
+        // Если у выбранного устройства нет OEMData, предлагает создать стоковые
+        // параметры. Возвращает true, если что-то было записано.
+        bool OfferCreateStockData();
         void ClearFlagControls();
 
         // kind: 0 = нейтральный (серый), 1 = успех (зелёный), 2 = ошибка (красный).

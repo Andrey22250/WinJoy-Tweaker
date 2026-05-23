@@ -306,6 +306,41 @@ OEMData bytes: {1}</value>
   <data name="restore.success" xml:space="preserve">
     <value>Restored from file: {0}</value>
   </data>
+  <data name="restore.nothingToWrite" xml:space="preserve">
+    <value>The file has no OEMData and no OEMName — nothing to restore.</value>
+  </data>
+  <data name="restore.invalidLength" xml:space="preserve">
+    <value>Invalid OEMData length in file: {0} bytes. Allowed values are 8 or 112 bytes (the hex data may be corrupted by manual editing).</value>
+  </data>
+  <data name="restore.crossDeviceWarning" xml:space="preserve">
+    <value>WARNING: the backup was made from a different device ({0}), but {1} is selected.
+Settings of one device will be written into another.
+
+</value>
+  </data>
+  <data name="create.offerTitle" xml:space="preserve">
+    <value>Create device parameters</value>
+  </data>
+  <data name="create.offerText" xml:space="preserve">
+    <value>This device has no OEMName and OEMData parameters.
+
+Create stock values?
+Name: "Controller", generic joystick, 32 buttons, all axes (Z, R, U, V, POV).
+
+After creation you can edit and apply them.</value>
+  </data>
+  <data name="create.success" xml:space="preserve">
+    <value>Stock parameters created. Backup: {0}</value>
+  </data>
+  <data name="create.backupFailed" xml:space="preserve">
+    <value>Failed to back up before creating parameters.</value>
+  </data>
+  <data name="create.writeDataError" xml:space="preserve">
+    <value>OEMData write error (code: {0}).</value>
+  </data>
+  <data name="create.writeNameError" xml:space="preserve">
+    <value>OEMData created. OEMName write error (code: {0}).</value>
+  </data>
   <data name="error.openRegistryKey" xml:space="preserve">
     <value>Failed to open registry key (code: {0})</value>
   </data>

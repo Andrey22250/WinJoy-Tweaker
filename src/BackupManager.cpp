@@ -37,9 +37,31 @@ std::wstring EnsureBackupDir()
     return dir;
 }
 
-// Ротация: оставляем не более MAX_BACKUPS .reg файлов в папке бэкапов.
+// Проверяет, что имя файла — бэкап ИМЕННО этого устройства: префикс
+// "<safeKey>_" + хвост ровно "YYYYMMDD_HHMMSS.reg" (8 цифр, '_', 6 цифр, .reg).
+// Строгая проверка хвоста нужна, чтобы устройство без суффикса
+// (VID_xxxx_PID_yyyy) не «цепляло» файлы суффиксного варианта
+// (VID_xxxx_PID_yyyy_IG_00), у которого имя начинается с того же префикса.
+static bool IsDeviceBackupName(const std::wstring& fileName,
+                               const std::wstring& safeKey)
+{
+    const std::wstring prefix = safeKey + L"_";
+    const size_t tailLen = 19;  // "YYYYMMDD_HHMMSS.reg"
+    if (fileName.size() != prefix.size() + tailLen) return false;
+    if (fileName.compare(0, prefix.size(), prefix) != 0) return false;
+
+    const std::wstring tail = fileName.substr(prefix.size());
+    for (int i = 0; i < 8; ++i)  if (!iswdigit(tail[i]))  return false;
+    if (tail[8] != L'_') return false;
+    for (int i = 9; i < 15; ++i) if (!iswdigit(tail[i]))  return false;
+    return tail.compare(15, 4, L".reg") == 0;
+}
+
+// Ротация: оставляем не более MAX_BACKUPS .reg файлов ДЛЯ КОНКРЕТНОГО
+// устройства (по префиксу safeKey). Бэкапы других устройств не трогаем —
+// иначе новый бэкап одного устройства мог бы вытеснить бэкапы другого.
 // Сортируем по времени последней записи, удаляем самые старые.
-static void RotateBackups(const std::wstring& dir)
+static void RotateBackups(const std::wstring& dir, const std::wstring& safeKey)
 {
     std::vector<std::pair<FILETIME, std::wstring>> files;
 
@@ -49,7 +71,8 @@ static void RotateBackups(const std::wstring& dir)
     if (hFind == INVALID_HANDLE_VALUE) return;
 
     do {
-        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            && IsDeviceBackupName(fd.cFileName, safeKey))
             files.push_back({ fd.ftLastWriteTime, dir + L"\\" + fd.cFileName });
     } while (FindNextFileW(hFind, &fd));
     FindClose(hFind);
@@ -272,7 +295,7 @@ std::wstring WriteBackup(const std::wstring& oemKey,
     CloseHandle(hFile);
     RegCloseKey(hKey);
 
-    RotateBackups(dir);
+    RotateBackups(dir, safeKey);
     return filePath;
 }
 
@@ -428,8 +451,10 @@ BackupParseResult ParseBackupFile(const std::wstring& filePath)
                 if (lastSlash != std::wstring::npos) {
                     std::wstring tail = header.substr(lastSlash + 1);
                     // Эвристика: VID_xxxx&PID_xxxx — корневой ключ устройства.
-                    if (tail.rfind(L"VID_", 0) == 0)
+                    if (tail.rfind(L"VID_", 0) == 0) {
                         scope = Scope::Root;
+                        r.deviceKey = tail;
+                    }
                 }
             }
             continue;

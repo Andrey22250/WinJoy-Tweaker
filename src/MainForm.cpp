@@ -412,6 +412,7 @@ void MainForm::RefreshDeviceList()
 {
     comboBoxDevice->BeginUpdate();
     comboBoxDevice->Items->Clear();
+    _refreshing = true;
 
     try {
         auto devices = RegistryEngine::ScanDevices();
@@ -443,6 +444,7 @@ void MainForm::RefreshDeviceList()
         SetStatus(Localization::T(L"status.scanInternalError"), StatusError);
     }
     finally {
+        _refreshing = false;
         comboBoxDevice->EndUpdate();
     }
 }
@@ -745,7 +747,91 @@ void MainForm::checkHasPov_CheckedChanged(System::Object^ sender, System::EventA
 
 void MainForm::comboBoxDevice_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e)
 {
+    // Предложение создать стоковые параметры показываем только при ЯВНОМ выборе
+    // устройства пользователем — не внутри LoadDeviceData, который вызывается
+    // также при авто-обновлении по WM_DEVICECHANGE (иначе модальное окно
+    // выскакивало бы само при подключении/отключении устройств).
+    OfferCreateStockData();
     LoadDeviceData();
+}
+
+// -----------------------------------------------------------------------
+// Создание стоковых OEMName/OEMData для «пустого» устройства.
+// У части рулей (например, Ardor) эти параметры отсутствуют в реестре из
+// коробки, и без них блок настроек недоступен. По согласию пользователя
+// записываем дефолтную конфигурацию, которую дальше можно отредактировать.
+// -----------------------------------------------------------------------
+bool MainForm::OfferCreateStockData()
+{
+    // Подавляем во время программного обновления списка (см. _refreshing).
+    if (_refreshing) return false;
+
+    DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
+    if (sel == nullptr) return false;
+
+    // Не предлагаем повторно тем устройствам, по которым уже был отказ в сессии.
+    if (_declinedCreate->Contains(sel->RegistryKey)) return false;
+
+    msclr::interop::marshal_context ctx;
+    std::wstring oemKey = ctx.marshal_as<std::wstring>(sel->RegistryKey);
+
+    DeviceData current = RegistryEngine::ReadDeviceData(oemKey);
+    // Если ключ не открылся (ошибка) или OEMData уже есть — предлагать нечего.
+    if (!current.errorMessage.empty() || current.hasOemData) return false;
+
+    if (MessageBox::Show(this,
+            Localization::T(L"create.offerText"),
+            Localization::T(L"create.offerTitle"),
+            MessageBoxButtons::OKCancel, MessageBoxIcon::Question)
+        != System::Windows::Forms::DialogResult::OK)
+    {
+        _declinedCreate->Add(sel->RegistryKey);
+        return false;
+    }
+
+    // Автобэкап перед записью — поддерево устройства (даже почти пустое).
+    std::wstring backupPath = BackupManager::WriteBackup(oemKey);
+    if (backupPath.empty()) {
+        SetStatus(Localization::T(L"create.backupFailed"), StatusError);
+        return false;
+    }
+
+    // Стоковый OEMData (8 байт, как у современных HID):
+    //   dwFlags = HASZ | HASPOV | HASR | HASU | HASV = 0x01880003 (обычный джойстик)
+    //   dwNumButtons = 32
+    DWORD dwFlags = JoyHws::HASZ | JoyHws::HASPOV
+                  | JoyHws::HASR | JoyHws::HASU | JoyHws::HASV;
+    DWORD dwNumButtons = 32;
+
+    std::vector<BYTE> stock(8);
+    stock[0] = (BYTE)( dwFlags        & 0xFF);
+    stock[1] = (BYTE)((dwFlags >>  8) & 0xFF);
+    stock[2] = (BYTE)((dwFlags >> 16) & 0xFF);
+    stock[3] = (BYTE)((dwFlags >> 24) & 0xFF);
+    stock[4] = (BYTE)( dwNumButtons        & 0xFF);
+    stock[5] = (BYTE)((dwNumButtons >>  8) & 0xFF);
+    stock[6] = (BYTE)((dwNumButtons >> 16) & 0xFF);
+    stock[7] = (BYTE)((dwNumButtons >> 24) & 0xFF);
+
+    LSTATUS st = RegistryEngine::WriteDeviceData(oemKey, stock);
+    if (st != ERROR_SUCCESS) {
+        SetStatus(Localization::T(L"create.writeDataError", st), StatusError);
+        return false;
+    }
+
+    // OEMName записываем, только если его ещё нет — чтобы не затирать имя,
+    // если у устройства оно вдруг есть, а OEMData нет.
+    if (current.oemName.empty()) {
+        st = RegistryEngine::WriteOemName(oemKey, L"Controller");
+        if (st != ERROR_SUCCESS) {
+            SetStatus(Localization::T(L"create.writeNameError", st), StatusError);
+            return true;
+        }
+    }
+
+    SetStatus(Localization::T(L"create.success", gcnew String(backupPath.c_str())),
+              StatusSuccess);
+    return true;
 }
 
 // Срабатывает один раз через 250 мс после последнего WM_DEVICECHANGE —
@@ -956,6 +1042,25 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
         return;
     }
 
+    // #1: восстанавливать нечего, если в файле нет ни OEMData, ни OEMName.
+    // Без этой проверки пустой OEMData затёр бы реальные настройки устройства.
+    if (parsed.oemDataRaw.empty() && parsed.oemName.empty()) {
+        SetStatus(Localization::T(L"restore.nothingToWrite"), StatusError);
+        return;
+    }
+
+    // Санити-проверка длины OEMData: корректны только 8 байт (hws у современных
+    // HID) или 112 (полная JOYREGHWCONFIG). Повреждённый при ручной правке hex
+    // обычно даёт другую длину (ParseHexBlob обрезает блоб на «битом» символе),
+    // поэтому эта проверка заодно ловит несуществующие hex-значения.
+    if (!parsed.oemDataRaw.empty()
+        && parsed.oemDataRaw.size() != 8
+        && parsed.oemDataRaw.size() != sizeof(JOYREGHWCONFIG)) {
+        SetStatus(Localization::T(L"restore.invalidLength",
+            (int)parsed.oemDataRaw.size()), StatusError);
+        return;
+    }
+
     // Собираем hex-строку байт OEMData из бэкапа для показа в диалоге.
     System::Text::StringBuilder^ hexBuilder = gcnew System::Text::StringBuilder((int)parsed.oemDataRaw.size() * 3);
     for (size_t i = 0; i < parsed.oemDataRaw.size(); ++i) {
@@ -963,21 +1068,37 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
         hexBuilder->AppendFormat(L"{0:X2}", parsed.oemDataRaw[i]);
     }
 
+    // #2: предупреждение о кросс-девайсе — бэкап снят с другого устройства.
+    // Сравниваем ключ из заголовка .reg с выбранным (без учёта регистра).
+    String^ warning = String::Empty;
+    if (!parsed.deviceKey.empty()) {
+        String^ fileKey = gcnew String(parsed.deviceKey.c_str());
+        if (!String::Equals(fileKey, sel->RegistryKey,
+                StringComparison::OrdinalIgnoreCase)) {
+            warning = Localization::T(L"restore.crossDeviceWarning",
+                fileKey, sel->RegistryKey);
+        }
+    }
+
     // Подтверждение: восстановление перезапишет текущие настройки устройства.
-    String^ msg = Localization::T(L"restore.confirmText",
+    String^ msg = warning + Localization::T(L"restore.confirmText",
         gcnew String(parsed.oemName.c_str()),
         hexBuilder->ToString());
 
     if (MessageBox::Show(this, msg, Localization::T(L"restore.confirmTitle"),
-            MessageBoxButtons::OKCancel, MessageBoxIcon::Question)
+            MessageBoxButtons::OKCancel,
+            warning->Length > 0 ? MessageBoxIcon::Warning : MessageBoxIcon::Question)
         != System::Windows::Forms::DialogResult::OK)
         return;
 
-    // Пишем OEMData из бэкапа.
-    LSTATUS st = RegistryEngine::WriteDeviceData(oemKey, parsed.oemDataRaw);
-    if (st != ERROR_SUCCESS) {
-        SetStatus(Localization::T(L"status.writeOemDataError", st), StatusError);
-        return;
+    // Пишем OEMData из бэкапа — только если он там есть (#1).
+    LSTATUS st = ERROR_SUCCESS;
+    if (!parsed.oemDataRaw.empty()) {
+        st = RegistryEngine::WriteDeviceData(oemKey, parsed.oemDataRaw);
+        if (st != ERROR_SUCCESS) {
+            SetStatus(Localization::T(L"status.writeOemDataError", st), StatusError);
+            return;
+        }
     }
 
     // Пишем OEMName, если он был в файле.
