@@ -952,7 +952,7 @@ namespace WinJoytweaker {
             this->tabPageAxes->Location = System::Drawing::Point(4, 34);
             this->tabPageAxes->Name = L"tabPageAxes";
             this->tabPageAxes->Padding = System::Windows::Forms::Padding(28);
-            this->tabPageAxes->Size = System::Drawing::Size(192, 62);
+            this->tabPageAxes->Size = System::Drawing::Size(1288, 1046);
             this->tabPageAxes->TabIndex = 1;
             this->tabPageAxes->Text = L"Оси и кнопки";
             // 
@@ -975,7 +975,7 @@ namespace WinJoytweaker {
             this->layoutAxesTab->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->layoutAxesTab->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Percent, 100)));
             this->layoutAxesTab->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 70)));
-            this->layoutAxesTab->Size = System::Drawing::Size(136, 6);
+            this->layoutAxesTab->Size = System::Drawing::Size(1232, 990);
             this->layoutAxesTab->TabIndex = 0;
             // 
             // labelAxesGridHeader
@@ -993,10 +993,10 @@ namespace WinJoytweaker {
             // 
             this->labelButtonsGridHeader->AutoSize = true;
             this->labelButtonsGridHeader->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
-            this->labelButtonsGridHeader->Location = System::Drawing::Point(80, 0);
+            this->labelButtonsGridHeader->Location = System::Drawing::Point(628, 0);
             this->labelButtonsGridHeader->Margin = System::Windows::Forms::Padding(12, 0, 0, 10);
             this->labelButtonsGridHeader->Name = L"labelButtonsGridHeader";
-            this->labelButtonsGridHeader->Size = System::Drawing::Size(48, 56);
+            this->labelButtonsGridHeader->Size = System::Drawing::Size(83, 28);
             this->labelButtonsGridHeader->TabIndex = 1;
             this->labelButtonsGridHeader->Text = L"Кнопки";
             // 
@@ -1013,13 +1013,13 @@ namespace WinJoytweaker {
             });
             this->dataGridAxes->Dock = System::Windows::Forms::DockStyle::Fill;
             this->dataGridAxes->EnableHeadersVisualStyles = false;
-            this->dataGridAxes->Location = System::Drawing::Point(0, 66);
+            this->dataGridAxes->Location = System::Drawing::Point(0, 38);
             this->dataGridAxes->Margin = System::Windows::Forms::Padding(0, 0, 12, 18);
             this->dataGridAxes->Name = L"dataGridAxes";
             this->dataGridAxes->RowHeadersVisible = false;
             this->dataGridAxes->RowHeadersWidth = 62;
             this->dataGridAxes->SelectionMode = System::Windows::Forms::DataGridViewSelectionMode::CellSelect;
-            this->dataGridAxes->Size = System::Drawing::Size(56, 1);
+            this->dataGridAxes->Size = System::Drawing::Size(604, 864);
             this->dataGridAxes->TabIndex = 2;
             // 
             // colAxesIndex
@@ -1051,13 +1051,13 @@ namespace WinJoytweaker {
             });
             this->dataGridButtons->Dock = System::Windows::Forms::DockStyle::Fill;
             this->dataGridButtons->EnableHeadersVisualStyles = false;
-            this->dataGridButtons->Location = System::Drawing::Point(80, 66);
+            this->dataGridButtons->Location = System::Drawing::Point(628, 38);
             this->dataGridButtons->Margin = System::Windows::Forms::Padding(12, 0, 0, 18);
             this->dataGridButtons->Name = L"dataGridButtons";
             this->dataGridButtons->RowHeadersVisible = false;
             this->dataGridButtons->RowHeadersWidth = 62;
             this->dataGridButtons->SelectionMode = System::Windows::Forms::DataGridViewSelectionMode::CellSelect;
-            this->dataGridButtons->Size = System::Drawing::Size(56, 1);
+            this->dataGridButtons->Size = System::Drawing::Size(604, 864);
             this->dataGridButtons->TabIndex = 3;
             // 
             // colButtonsIndex
@@ -1089,18 +1089,18 @@ namespace WinJoytweaker {
             this->panelAxesButtons->Controls->Add(this->buttonReloadNames, 1, 0);
             this->panelAxesButtons->Controls->Add(this->buttonApplyNames, 2, 0);
             this->panelAxesButtons->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->panelAxesButtons->Location = System::Drawing::Point(0, -64);
+            this->panelAxesButtons->Location = System::Drawing::Point(0, 920);
             this->panelAxesButtons->Margin = System::Windows::Forms::Padding(0);
             this->panelAxesButtons->Name = L"panelAxesButtons";
             this->panelAxesButtons->RowCount = 1;
             this->panelAxesButtons->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Percent, 100)));
-            this->panelAxesButtons->Size = System::Drawing::Size(136, 70);
+            this->panelAxesButtons->Size = System::Drawing::Size(1232, 70);
             this->panelAxesButtons->TabIndex = 4;
             // 
             // buttonReloadNames
             // 
             this->buttonReloadNames->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->buttonReloadNames->Location = System::Drawing::Point(-344, 12);
+            this->buttonReloadNames->Location = System::Drawing::Point(752, 12);
             this->buttonReloadNames->Margin = System::Windows::Forms::Padding(0, 12, 12, 12);
             this->buttonReloadNames->Name = L"buttonReloadNames";
             this->buttonReloadNames->Size = System::Drawing::Size(228, 46);
@@ -1111,7 +1111,7 @@ namespace WinJoytweaker {
             // buttonApplyNames
             // 
             this->buttonApplyNames->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->buttonApplyNames->Location = System::Drawing::Point(-92, 12);
+            this->buttonApplyNames->Location = System::Drawing::Point(1004, 12);
             this->buttonApplyNames->Margin = System::Windows::Forms::Padding(12, 12, 0, 12);
             this->buttonApplyNames->Name = L"buttonApplyNames";
             this->buttonApplyNames->Size = System::Drawing::Size(228, 46);

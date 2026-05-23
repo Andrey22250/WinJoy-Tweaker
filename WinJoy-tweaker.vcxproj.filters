@@ -26,6 +26,9 @@
     <ClInclude Include="src\MainForm.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\FlatTabControl.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\RegistryEngine.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -35,6 +38,7 @@
     <ClInclude Include="src\locales\Localization.h">
       <Filter>src\locales</Filter>
     </ClInclude>
+    <ClInclude Include="docs\mmddk.h" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="src\app.manifest">
@@ -45,6 +49,9 @@
     <None Include="src\app.config">
       <Filter>src</Filter>
     </None>
+    <None Include="CLAUDE.md" />
+    <None Include="docs\PROJECT_STATUS.md" />
+    <None Include="docs\references.md" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="src\MainForm.resx">
