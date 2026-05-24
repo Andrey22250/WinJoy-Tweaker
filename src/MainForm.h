@@ -211,6 +211,10 @@ namespace WinJoytweaker {
         void PopulateNamesGrids(const DeviceData& data);
         void buttonApplyNames_Click(System::Object^ sender, System::EventArgs^ e);
         void buttonReloadNames_Click(System::Object^ sender, System::EventArgs^ e);
+        // Валидация ввода имён осей/кнопок в DataGridView (длина 32, латиница,
+        // цифры, пробел и ()-_/). Фильтр вешается на встроенный TextBox ячейки.
+        void nameGrid_EditingControlShowing(System::Object^ sender, System::Windows::Forms::DataGridViewEditingControlShowingEventArgs^ e);
+        void nameCell_KeyPress(System::Object^ sender, System::Windows::Forms::KeyPressEventArgs^ e);
 
     protected:
         // Перехват WM_DEVICECHANGE: подключение/отключение USB-HID устройства.

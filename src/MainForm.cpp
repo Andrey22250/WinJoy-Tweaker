@@ -317,6 +317,11 @@ void MainForm::ApplyDarkTheme()
         cell->SelectionForeColor = textOn;
         cell->Padding = System::Windows::Forms::Padding(6, 2, 6, 2);
         g->DefaultCellStyle = cell;
+
+        // Валидация ввода имени: фильтр и ограничение длины вешаются на
+        // встроенный редактор ячейки при входе в режим правки.
+        g->EditingControlShowing += gcnew DataGridViewEditingControlShowingEventHandler(
+            this, &MainForm::nameGrid_EditingControlShowing);
     }
 
     // Кнопки вкладки
@@ -896,6 +901,32 @@ void MainForm::textBoxOemName_KeyPress(System::Object^ sender, System::Windows::
     wchar_t c = e->KeyChar;
     if (!((c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z') || c == L' '))
         e->Handled = true;
+}
+
+// Вход в режим правки ячейки имени: ограничиваем длину и навешиваем фильтр
+// символов на встроенный TextBox. Редактор переиспользуется между ячейками,
+// поэтому сначала снимаем свой обработчик (иначе он накопится при повторах).
+void MainForm::nameGrid_EditingControlShowing(System::Object^ sender,
+    System::Windows::Forms::DataGridViewEditingControlShowingEventArgs^ e)
+{
+    TextBox^ tb = dynamic_cast<TextBox^>(e->Control);
+    if (tb == nullptr) return;
+
+    tb->MaxLength = 32;
+    tb->KeyPress -= gcnew KeyPressEventHandler(this, &MainForm::nameCell_KeyPress);
+    tb->KeyPress += gcnew KeyPressEventHandler(this, &MainForm::nameCell_KeyPress);
+}
+
+// Фильтр символов имени оси/кнопки: латиница, цифры, пробел и ()-_/.
+// Длину ограничивает MaxLength=32 встроенного редактора.
+void MainForm::nameCell_KeyPress(System::Object^ sender, System::Windows::Forms::KeyPressEventArgs^ e)
+{
+    if (e->KeyChar == '\b') return;
+    wchar_t c = e->KeyChar;
+    bool ok = (c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z')
+           || (c >= L'0' && c <= L'9') || c == L' '
+           || c == L'(' || c == L')' || c == L'-' || c == L'_' || c == L'/';
+    if (!ok) e->Handled = true;
 }
 
 // -----------------------------------------------------------------------
