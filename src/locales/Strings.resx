@@ -133,7 +133,7 @@
     <value>Параметры устройства (OEMData):</value>
   </data>
   <data name="label.dwNumButtons" xml:space="preserve">
-    <value>Кнопок (hws.dwNumButtons):</value>
+    <value>Кнопок:</value>
   </data>
   <data name="label.flagsGroup" xml:space="preserve">
     <value>Параметры (hws.dwFlags)</value>

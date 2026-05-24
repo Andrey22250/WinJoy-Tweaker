@@ -133,7 +133,7 @@
     <value>Device parameters (OEMData):</value>
   </data>
   <data name="label.dwNumButtons" xml:space="preserve">
-    <value>Buttons (hws.dwNumButtons):</value>
+    <value>Buttons:</value>
   </data>
   <data name="label.flagsGroup" xml:space="preserve">
     <value>Parameters (hws.dwFlags)</value>
