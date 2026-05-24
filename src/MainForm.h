@@ -82,6 +82,10 @@ namespace WinJoytweaker {
         // ── Информационные поля (read-only) ──────────────────────────────
         System::Windows::Forms::Label^             labelDwNumButtons;
         System::Windows::Forms::TextBox^           textBoxDwNumButtons;
+        // Контейнер строки «Кнопок: [поле]»: подпись + поле в своей 2-колоночной
+        // раскладке, чтобы поле начиналось сразу после короткой подписи, а не
+        // после общей широкой колонки 0 rootLayout.
+        System::Windows::Forms::TableLayoutPanel^  rowNumButtons;
         // Отладочный hex-dump сырых байт OEMData (под GroupBox'ом)
         System::Windows::Forms::Label^             labelRawData;
         System::Windows::Forms::TextBox^           textBoxRawData;
@@ -254,16 +258,18 @@ namespace WinJoytweaker {
         void InitializeComponent(void)
         {
             this->components = (gcnew System::ComponentModel::Container());
+            System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(MainForm::typeid));
             this->rootLayout = (gcnew System::Windows::Forms::TableLayoutPanel());
             this->labelDevice = (gcnew System::Windows::Forms::Label());
+            this->checkOnlyConnected = (gcnew System::Windows::Forms::CheckBox());
             this->comboBoxDevice = (gcnew System::Windows::Forms::ComboBox());
             this->buttonRefresh = (gcnew System::Windows::Forms::Button());
-            this->checkOnlyConnected = (gcnew System::Windows::Forms::CheckBox());
             this->labelOemNameCaption = (gcnew System::Windows::Forms::Label());
             this->textBoxOemName = (gcnew System::Windows::Forms::TextBox());
             this->labelOemDataCaption = (gcnew System::Windows::Forms::Label());
             this->labelDwNumButtons = (gcnew System::Windows::Forms::Label());
             this->textBoxDwNumButtons = (gcnew System::Windows::Forms::TextBox());
+            this->rowNumButtons = (gcnew System::Windows::Forms::TableLayoutPanel());
             this->groupBoxFlags = (gcnew System::Windows::Forms::GroupBox());
             this->innerLayoutFlags = (gcnew System::Windows::Forms::TableLayoutPanel());
             this->labelDeviceTypeHeader = (gcnew System::Windows::Forms::Label());
@@ -307,8 +313,6 @@ namespace WinJoytweaker {
             this->tabMain = (gcnew System::Windows::Forms::TabControl());
             this->tabPageOem = (gcnew System::Windows::Forms::TabPage());
             this->tabPageAxes = (gcnew System::Windows::Forms::TabPage());
-            this->tabPageInfo = (gcnew System::Windows::Forms::TabPage());
-            this->treeDeviceInfo = (gcnew System::Windows::Forms::TreeView());
             this->layoutAxesTab = (gcnew System::Windows::Forms::TableLayoutPanel());
             this->labelAxesGridHeader = (gcnew System::Windows::Forms::Label());
             this->labelButtonsGridHeader = (gcnew System::Windows::Forms::Label());
@@ -321,20 +325,23 @@ namespace WinJoytweaker {
             this->panelAxesButtons = (gcnew System::Windows::Forms::TableLayoutPanel());
             this->buttonReloadNames = (gcnew System::Windows::Forms::Button());
             this->buttonApplyNames = (gcnew System::Windows::Forms::Button());
+            this->tabPageInfo = (gcnew System::Windows::Forms::TabPage());
+            this->treeDeviceInfo = (gcnew System::Windows::Forms::TreeView());
             this->rootLayout->SuspendLayout();
             this->groupBoxFlags->SuspendLayout();
             this->innerLayoutFlags->SuspendLayout();
             this->panelXAxis->SuspendLayout();
             this->panelYAxis->SuspendLayout();
             this->panelButtons->SuspendLayout();
+            this->rowNumButtons->SuspendLayout();
             this->tabMain->SuspendLayout();
             this->tabPageOem->SuspendLayout();
             this->tabPageAxes->SuspendLayout();
-            this->tabPageInfo->SuspendLayout();
             this->layoutAxesTab->SuspendLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridAxes))->BeginInit();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridButtons))->BeginInit();
             this->panelAxesButtons->SuspendLayout();
+            this->tabPageInfo->SuspendLayout();
             this->SuspendLayout();
             // 
             // rootLayout
@@ -350,8 +357,7 @@ namespace WinJoytweaker {
             this->rootLayout->Controls->Add(this->labelOemNameCaption, 0, 2);
             this->rootLayout->Controls->Add(this->textBoxOemName, 0, 3);
             this->rootLayout->Controls->Add(this->labelOemDataCaption, 0, 4);
-            this->rootLayout->Controls->Add(this->labelDwNumButtons, 0, 5);
-            this->rootLayout->Controls->Add(this->textBoxDwNumButtons, 1, 5);
+            this->rootLayout->Controls->Add(this->rowNumButtons, 0, 5);
             this->rootLayout->Controls->Add(this->groupBoxFlags, 0, 6);
             this->rootLayout->Controls->Add(this->labelRawData, 0, 7);
             this->rootLayout->Controls->Add(this->textBoxRawData, 1, 7);
@@ -370,7 +376,7 @@ namespace WinJoytweaker {
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
-            this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
+            this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 41)));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 495)));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
@@ -390,13 +396,26 @@ namespace WinJoytweaker {
             this->labelDevice->TabIndex = 0;
             this->labelDevice->Text = L"Устройство:";
             // 
+            // checkOnlyConnected
+            // 
+            this->checkOnlyConnected->Anchor = System::Windows::Forms::AnchorStyles::Right;
+            this->checkOnlyConnected->AutoSize = true;
+            this->checkOnlyConnected->Checked = true;
+            this->checkOnlyConnected->CheckState = System::Windows::Forms::CheckState::Checked;
+            this->checkOnlyConnected->Location = System::Drawing::Point(1024, 8);
+            this->checkOnlyConnected->Margin = System::Windows::Forms::Padding(0, 0, 0, 10);
+            this->checkOnlyConnected->Name = L"checkOnlyConnected";
+            this->checkOnlyConnected->Size = System::Drawing::Size(236, 29);
+            this->checkOnlyConnected->TabIndex = 3;
+            this->checkOnlyConnected->Text = L"Только подключённые";
+            // 
             // comboBoxDevice
             // 
             this->rootLayout->SetColumnSpan(this->comboBoxDevice, 2);
             this->comboBoxDevice->Dock = System::Windows::Forms::DockStyle::Fill;
             this->comboBoxDevice->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
             this->comboBoxDevice->ItemHeight = 25;
-            this->comboBoxDevice->Location = System::Drawing::Point(28, 43);
+            this->comboBoxDevice->Location = System::Drawing::Point(28, 47);
             this->comboBoxDevice->Margin = System::Windows::Forms::Padding(0, 0, 12, 0);
             this->comboBoxDevice->Name = L"comboBoxDevice";
             this->comboBoxDevice->Size = System::Drawing::Size(980, 33);
@@ -406,7 +425,7 @@ namespace WinJoytweaker {
             // buttonRefresh
             // 
             this->buttonRefresh->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->buttonRefresh->Location = System::Drawing::Point(1020, 43);
+            this->buttonRefresh->Location = System::Drawing::Point(1020, 47);
             this->buttonRefresh->Margin = System::Windows::Forms::Padding(0);
             this->buttonRefresh->MinimumSize = System::Drawing::Size(240, 0);
             this->buttonRefresh->Name = L"buttonRefresh";
@@ -414,23 +433,12 @@ namespace WinJoytweaker {
             this->buttonRefresh->TabIndex = 2;
             this->buttonRefresh->Text = L"Обновить";
             this->buttonRefresh->Click += gcnew System::EventHandler(this, &MainForm::buttonRefresh_Click);
-            //
-            // checkOnlyConnected
-            //
-            this->checkOnlyConnected->AutoSize = true;
-            this->checkOnlyConnected->Anchor = System::Windows::Forms::AnchorStyles::Right;
-            this->checkOnlyConnected->Checked = true;
-            this->checkOnlyConnected->CheckState = System::Windows::Forms::CheckState::Checked;
-            this->checkOnlyConnected->Margin = System::Windows::Forms::Padding(0, 0, 0, 10);
-            this->checkOnlyConnected->Name = L"checkOnlyConnected";
-            this->checkOnlyConnected->TabIndex = 3;
-            this->checkOnlyConnected->Text = L"Только подключённые";
-            //
+            // 
             // labelOemNameCaption
-            //
+            // 
             this->labelOemNameCaption->AutoSize = true;
             this->rootLayout->SetColumnSpan(this->labelOemNameCaption, 3);
-            this->labelOemNameCaption->Location = System::Drawing::Point(28, 104);
+            this->labelOemNameCaption->Location = System::Drawing::Point(28, 102);
             this->labelOemNameCaption->Margin = System::Windows::Forms::Padding(0, 22, 0, 8);
             this->labelOemNameCaption->Name = L"labelOemNameCaption";
             this->labelOemNameCaption->Size = System::Drawing::Size(308, 25);
@@ -441,7 +449,7 @@ namespace WinJoytweaker {
             // 
             this->rootLayout->SetColumnSpan(this->textBoxOemName, 3);
             this->textBoxOemName->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->textBoxOemName->Location = System::Drawing::Point(28, 137);
+            this->textBoxOemName->Location = System::Drawing::Point(28, 135);
             this->textBoxOemName->Margin = System::Windows::Forms::Padding(0);
             this->textBoxOemName->MaxLength = 128;
             this->textBoxOemName->Name = L"textBoxOemName";
@@ -453,7 +461,7 @@ namespace WinJoytweaker {
             // 
             this->labelOemDataCaption->AutoSize = true;
             this->rootLayout->SetColumnSpan(this->labelOemDataCaption, 3);
-            this->labelOemDataCaption->Location = System::Drawing::Point(28, 192);
+            this->labelOemDataCaption->Location = System::Drawing::Point(28, 190);
             this->labelOemDataCaption->Margin = System::Windows::Forms::Padding(0, 22, 0, 12);
             this->labelOemDataCaption->Name = L"labelOemDataCaption";
             this->labelOemDataCaption->Size = System::Drawing::Size(314, 25);
@@ -462,33 +470,46 @@ namespace WinJoytweaker {
             // 
             // labelDwNumButtons
             // 
+            this->labelDwNumButtons->Anchor = System::Windows::Forms::AnchorStyles::Left;
             this->labelDwNumButtons->AutoSize = true;
-            this->labelDwNumButtons->Location = System::Drawing::Point(28, 237);
-            this->labelDwNumButtons->Margin = System::Windows::Forms::Padding(0, 8, 18, 8);
+            this->labelDwNumButtons->Margin = System::Windows::Forms::Padding(0, 0, 18, 0);
             this->labelDwNumButtons->Name = L"labelDwNumButtons";
-            this->labelDwNumButtons->Size = System::Drawing::Size(264, 25);
+            this->labelDwNumButtons->Size = System::Drawing::Size(80, 25);
             this->labelDwNumButtons->TabIndex = 7;
-            this->labelDwNumButtons->Text = L"Кнопок (hws.dwNumButtons):";
-            // 
+            this->labelDwNumButtons->Text = L"Кнопок:";
+            //
             // textBoxDwNumButtons
-            // 
-            this->rootLayout->SetColumnSpan(this->textBoxDwNumButtons, 2);
+            //
             this->textBoxDwNumButtons->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->textBoxDwNumButtons->Location = System::Drawing::Point(310, 233);
             this->textBoxDwNumButtons->Margin = System::Windows::Forms::Padding(0, 4, 0, 4);
             this->textBoxDwNumButtons->MaxLength = 2;
             this->textBoxDwNumButtons->Name = L"textBoxDwNumButtons";
-            this->textBoxDwNumButtons->Size = System::Drawing::Size(950, 33);
+            this->textBoxDwNumButtons->Size = System::Drawing::Size(996, 33);
             this->textBoxDwNumButtons->TabIndex = 7;
             this->textBoxDwNumButtons->TextChanged += gcnew System::EventHandler(this, &MainForm::flagsControl_Changed);
             this->textBoxDwNumButtons->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &MainForm::textBoxDwNumButtons_KeyPress);
-            // 
+            //
+            // rowNumButtons
+            //
+            this->rootLayout->SetColumnSpan(this->rowNumButtons, 3);
+            this->rowNumButtons->ColumnCount = 2;
+            this->rowNumButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle()));
+            this->rowNumButtons->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent, 100)));
+            this->rowNumButtons->Controls->Add(this->labelDwNumButtons, 0, 0);
+            this->rowNumButtons->Controls->Add(this->textBoxDwNumButtons, 1, 0);
+            this->rowNumButtons->Dock = System::Windows::Forms::DockStyle::Fill;
+            this->rowNumButtons->Margin = System::Windows::Forms::Padding(0);
+            this->rowNumButtons->Name = L"rowNumButtons";
+            this->rowNumButtons->RowCount = 1;
+            this->rowNumButtons->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Percent, 100)));
+            this->rowNumButtons->TabIndex = 7;
+            //
             // groupBoxFlags
             // 
             this->rootLayout->SetColumnSpan(this->groupBoxFlags, 3);
             this->groupBoxFlags->Controls->Add(this->innerLayoutFlags);
             this->groupBoxFlags->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->groupBoxFlags->Location = System::Drawing::Point(28, 288);
+            this->groupBoxFlags->Location = System::Drawing::Point(28, 286);
             this->groupBoxFlags->Margin = System::Windows::Forms::Padding(0, 18, 0, 0);
             this->groupBoxFlags->Name = L"groupBoxFlags";
             this->groupBoxFlags->Padding = System::Windows::Forms::Padding(18, 12, 18, 18);
@@ -850,7 +871,7 @@ namespace WinJoytweaker {
             // labelRawData
             // 
             this->labelRawData->AutoSize = true;
-            this->labelRawData->Location = System::Drawing::Point(28, 787);
+            this->labelRawData->Location = System::Drawing::Point(28, 785);
             this->labelRawData->Margin = System::Windows::Forms::Padding(0, 22, 18, 8);
             this->labelRawData->Name = L"labelRawData";
             this->labelRawData->Size = System::Drawing::Size(218, 25);
@@ -863,17 +884,17 @@ namespace WinJoytweaker {
                 | System::Windows::Forms::AnchorStyles::Right));
             this->rootLayout->SetColumnSpan(this->textBoxRawData, 2);
             this->textBoxRawData->Font = (gcnew System::Drawing::Font(L"Consolas", 10));
-            this->textBoxRawData->Location = System::Drawing::Point(310, 783);
+            this->textBoxRawData->Location = System::Drawing::Point(264, 781);
             this->textBoxRawData->Margin = System::Windows::Forms::Padding(0, 18, 0, 4);
             this->textBoxRawData->Name = L"textBoxRawData";
             this->textBoxRawData->ReadOnly = true;
-            this->textBoxRawData->Size = System::Drawing::Size(950, 31);
+            this->textBoxRawData->Size = System::Drawing::Size(996, 31);
             this->textBoxRawData->TabIndex = 11;
             // 
             // labelPreviewData
             // 
             this->labelPreviewData->AutoSize = true;
-            this->labelPreviewData->Location = System::Drawing::Point(28, 832);
+            this->labelPreviewData->Location = System::Drawing::Point(28, 830);
             this->labelPreviewData->Margin = System::Windows::Forms::Padding(0, 12, 18, 8);
             this->labelPreviewData->Name = L"labelPreviewData";
             this->labelPreviewData->Size = System::Drawing::Size(171, 25);
@@ -886,18 +907,18 @@ namespace WinJoytweaker {
                 | System::Windows::Forms::AnchorStyles::Right));
             this->rootLayout->SetColumnSpan(this->textBoxPreviewData, 2);
             this->textBoxPreviewData->Font = (gcnew System::Drawing::Font(L"Consolas", 10));
-            this->textBoxPreviewData->Location = System::Drawing::Point(310, 828);
+            this->textBoxPreviewData->Location = System::Drawing::Point(264, 826);
             this->textBoxPreviewData->Margin = System::Windows::Forms::Padding(0, 8, 0, 4);
             this->textBoxPreviewData->Name = L"textBoxPreviewData";
             this->textBoxPreviewData->ReadOnly = true;
-            this->textBoxPreviewData->Size = System::Drawing::Size(950, 31);
+            this->textBoxPreviewData->Size = System::Drawing::Size(996, 31);
             this->textBoxPreviewData->TabIndex = 13;
             // 
             // labelStatus
             // 
             this->labelStatus->AutoSize = true;
             this->rootLayout->SetColumnSpan(this->labelStatus, 3);
-            this->labelStatus->Location = System::Drawing::Point(28, 883);
+            this->labelStatus->Location = System::Drawing::Point(28, 881);
             this->labelStatus->Margin = System::Windows::Forms::Padding(0, 18, 0, 0);
             this->labelStatus->Name = L"labelStatus";
             this->labelStatus->Size = System::Drawing::Size(0, 25);
@@ -917,7 +938,7 @@ namespace WinJoytweaker {
             this->panelButtons->Controls->Add(this->buttonRestore, 1, 1);
             this->panelButtons->Controls->Add(this->buttonApply, 2, 1);
             this->panelButtons->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->panelButtons->Location = System::Drawing::Point(28, 920);
+            this->panelButtons->Location = System::Drawing::Point(28, 918);
             this->panelButtons->Margin = System::Windows::Forms::Padding(0, 12, 0, 0);
             this->panelButtons->Name = L"panelButtons";
             this->panelButtons->RowCount = 2;
@@ -1016,25 +1037,9 @@ namespace WinJoytweaker {
             this->tabPageAxes->Size = System::Drawing::Size(1288, 1046);
             this->tabPageAxes->TabIndex = 1;
             this->tabPageAxes->Text = L"Оси и кнопки";
-            //
-            // tabPageInfo
-            //
-            this->tabPageInfo->Controls->Add(this->treeDeviceInfo);
-            this->tabPageInfo->Location = System::Drawing::Point(4, 34);
-            this->tabPageInfo->Name = L"tabPageInfo";
-            this->tabPageInfo->Padding = System::Windows::Forms::Padding(28);
-            this->tabPageInfo->Size = System::Drawing::Size(1288, 1046);
-            this->tabPageInfo->TabIndex = 2;
-            this->tabPageInfo->Text = L"Информация";
-            //
-            // treeDeviceInfo
-            //
-            this->treeDeviceInfo->Dock = System::Windows::Forms::DockStyle::Fill;
-            this->treeDeviceInfo->Name = L"treeDeviceInfo";
-            this->treeDeviceInfo->TabIndex = 0;
-            //
+            // 
             // layoutAxesTab
-            //
+            // 
             this->layoutAxesTab->ColumnCount = 2;
             this->layoutAxesTab->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent,
                 50)));
@@ -1194,6 +1199,24 @@ namespace WinJoytweaker {
             this->buttonApplyNames->Text = L"Применить имена";
             this->buttonApplyNames->Click += gcnew System::EventHandler(this, &MainForm::buttonApplyNames_Click);
             // 
+            // tabPageInfo
+            // 
+            this->tabPageInfo->Controls->Add(this->treeDeviceInfo);
+            this->tabPageInfo->Location = System::Drawing::Point(4, 34);
+            this->tabPageInfo->Name = L"tabPageInfo";
+            this->tabPageInfo->Padding = System::Windows::Forms::Padding(28);
+            this->tabPageInfo->Size = System::Drawing::Size(1288, 1046);
+            this->tabPageInfo->TabIndex = 2;
+            this->tabPageInfo->Text = L"Информация";
+            // 
+            // treeDeviceInfo
+            // 
+            this->treeDeviceInfo->Dock = System::Windows::Forms::DockStyle::Fill;
+            this->treeDeviceInfo->Location = System::Drawing::Point(28, 28);
+            this->treeDeviceInfo->Name = L"treeDeviceInfo";
+            this->treeDeviceInfo->Size = System::Drawing::Size(1232, 990);
+            this->treeDeviceInfo->TabIndex = 0;
+            // 
             // MainForm
             // 
             this->AutoScaleDimensions = System::Drawing::SizeF(144, 144);
@@ -1202,6 +1225,7 @@ namespace WinJoytweaker {
             this->Controls->Add(this->tabMain);
             this->Controls->Add(this->comboBoxLanguage);
             this->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.5F));
+            this->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.Icon")));
             this->Margin = System::Windows::Forms::Padding(8);
             this->MinimumSize = System::Drawing::Size(1039, 1136);
             this->Name = L"MainForm";
@@ -1219,15 +1243,17 @@ namespace WinJoytweaker {
             this->panelYAxis->ResumeLayout(false);
             this->panelYAxis->PerformLayout();
             this->panelButtons->ResumeLayout(false);
+            this->rowNumButtons->ResumeLayout(false);
+            this->rowNumButtons->PerformLayout();
             this->tabMain->ResumeLayout(false);
             this->tabPageOem->ResumeLayout(false);
             this->tabPageAxes->ResumeLayout(false);
-            this->tabPageInfo->ResumeLayout(false);
             this->layoutAxesTab->ResumeLayout(false);
             this->layoutAxesTab->PerformLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridAxes))->EndInit();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridButtons))->EndInit();
             this->panelAxesButtons->ResumeLayout(false);
+            this->tabPageInfo->ResumeLayout(false);
             this->ResumeLayout(false);
 
         }

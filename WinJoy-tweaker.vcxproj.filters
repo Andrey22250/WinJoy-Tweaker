@@ -55,6 +55,12 @@
     </Manifest>
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="app.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="WinJoy Tweaker.ico" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="src\app.config">
       <Filter>src</Filter>
     </None>

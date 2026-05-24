@@ -217,6 +217,7 @@ void MainForm::ApplyDarkTheme()
 
     rootLayout->BackColor       = bgDark;
     innerLayoutFlags->BackColor = bgDark;
+    rowNumButtons->BackColor    = bgDark;
 
     // Метки
     labelDevice->ForeColor          = textOn;

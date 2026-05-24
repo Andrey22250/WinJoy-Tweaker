@@ -133,6 +133,12 @@
     <Manifest Include="src\app.manifest" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="app.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="WinJoy Tweaker.ico" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="src\MainForm.cpp" />
     <ClCompile Include="src\RegistryEngine.cpp" />
     <ClCompile Include="src\BackupManager.cpp" />
@@ -154,6 +160,11 @@
   <ItemGroup>
     <EmbeddedResource Include="src\MainForm.resx">
       <DependentUpon>MainForm.h</DependentUpon>
+      <!-- ComponentResourceManager(MainForm::typeid) ищет ресурс строго по
+           FullName типа. Без явного LogicalName C++/CLI встраивает resx как
+           "MainForm.resources", и GetObject("$this.Icon") падает с
+           MissingManifestResourceException. -->
+      <LogicalName>WinJoytweaker.MainForm.resources</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="src\locales\Strings.resx" />
     <EmbeddedResource Include="src\locales\Strings_en.resx" />
