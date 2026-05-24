@@ -45,6 +45,13 @@ namespace WinJoytweaker {
             comboBoxLanguage->SelectedIndexChanged += gcnew System::EventHandler(
                 this, &MainForm::comboBoxLanguage_SelectedIndexChanged);
 
+            // Галочка «только подключённые»: выставляем сохранённое значение ДО
+            // подписки на handler, чтобы инициализация не триггерила рескан
+            // (первый скан сделает RefreshDeviceList ниже, уже с нужным флагом).
+            checkOnlyConnected->Checked = Localization::LoadShowOnlyConnected();
+            checkOnlyConnected->CheckedChanged += gcnew System::EventHandler(
+                this, &MainForm::checkOnlyConnected_CheckedChanged);
+
             ApplyLocalization();
             ApplyDarkTheme();
             RefreshDeviceList();
@@ -67,6 +74,7 @@ namespace WinJoytweaker {
         System::Windows::Forms::Label^             labelDevice;
         System::Windows::Forms::ComboBox^          comboBoxDevice;
         System::Windows::Forms::Button^            buttonRefresh;
+        System::Windows::Forms::CheckBox^          checkOnlyConnected;
         System::Windows::Forms::Label^             labelOemNameCaption;
         System::Windows::Forms::TextBox^           textBoxOemName;
         System::Windows::Forms::Label^             labelOemDataCaption;
@@ -203,6 +211,7 @@ namespace WinJoytweaker {
         void buttonOpenBackups_Click(System::Object^ sender, System::EventArgs^ e);
         void buttonRestore_Click(System::Object^ sender, System::EventArgs^ e);
         void buttonRefresh_Click(System::Object^ sender, System::EventArgs^ e);
+        void checkOnlyConnected_CheckedChanged(System::Object^ sender, System::EventArgs^ e);
         void comboBoxDevice_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e);
         void comboBoxLanguage_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e);
         void refreshDebounceTimer_Tick(System::Object^ sender, System::EventArgs^ e);
@@ -244,6 +253,7 @@ namespace WinJoytweaker {
             this->labelDevice = (gcnew System::Windows::Forms::Label());
             this->comboBoxDevice = (gcnew System::Windows::Forms::ComboBox());
             this->buttonRefresh = (gcnew System::Windows::Forms::Button());
+            this->checkOnlyConnected = (gcnew System::Windows::Forms::CheckBox());
             this->labelOemNameCaption = (gcnew System::Windows::Forms::Label());
             this->textBoxOemName = (gcnew System::Windows::Forms::TextBox());
             this->labelOemDataCaption = (gcnew System::Windows::Forms::Label());
@@ -326,6 +336,7 @@ namespace WinJoytweaker {
             this->rootLayout->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent, 100)));
             this->rootLayout->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle()));
             this->rootLayout->Controls->Add(this->labelDevice, 0, 0);
+            this->rootLayout->Controls->Add(this->checkOnlyConnected, 2, 0);
             this->rootLayout->Controls->Add(this->comboBoxDevice, 0, 1);
             this->rootLayout->Controls->Add(this->buttonRefresh, 2, 1);
             this->rootLayout->Controls->Add(this->labelOemNameCaption, 0, 2);
@@ -363,7 +374,7 @@ namespace WinJoytweaker {
             // labelDevice
             // 
             this->labelDevice->AutoSize = true;
-            this->rootLayout->SetColumnSpan(this->labelDevice, 3);
+            this->rootLayout->SetColumnSpan(this->labelDevice, 2);
             this->labelDevice->Location = System::Drawing::Point(28, 8);
             this->labelDevice->Margin = System::Windows::Forms::Padding(0, 0, 0, 10);
             this->labelDevice->Name = L"labelDevice";
@@ -395,9 +406,20 @@ namespace WinJoytweaker {
             this->buttonRefresh->TabIndex = 2;
             this->buttonRefresh->Text = L"Обновить";
             this->buttonRefresh->Click += gcnew System::EventHandler(this, &MainForm::buttonRefresh_Click);
-            // 
+            //
+            // checkOnlyConnected
+            //
+            this->checkOnlyConnected->AutoSize = true;
+            this->checkOnlyConnected->Anchor = System::Windows::Forms::AnchorStyles::Right;
+            this->checkOnlyConnected->Checked = true;
+            this->checkOnlyConnected->CheckState = System::Windows::Forms::CheckState::Checked;
+            this->checkOnlyConnected->Margin = System::Windows::Forms::Padding(0, 0, 0, 10);
+            this->checkOnlyConnected->Name = L"checkOnlyConnected";
+            this->checkOnlyConnected->TabIndex = 3;
+            this->checkOnlyConnected->Text = L"Только подключённые";
+            //
             // labelOemNameCaption
-            // 
+            //
             this->labelOemNameCaption->AutoSize = true;
             this->rootLayout->SetColumnSpan(this->labelOemNameCaption, 3);
             this->labelOemNameCaption->Location = System::Drawing::Point(28, 104);

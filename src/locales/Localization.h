@@ -35,6 +35,12 @@ namespace WinJoytweaker {
         // Сохраняет предпочтение в settings.ini.
         static void SavePreference(Language pref);
 
+        // Фильтр «только подключённые устройства» (settings.ini, ключ
+        // onlyConnected). По умолчанию true — при первом запуске показываем
+        // только реально подключённые устройства.
+        static bool LoadShowOnlyConnected();
+        static void SaveShowOnlyConnected(bool onlyConnected);
+
         // Устанавливает CurrentUICulture согласно предпочтению (Auto = культура,
         // установленная в Windows как UI-язык) и сбрасывает кеш строк, чтобы
         // следующий T() перечитал нужный resx.

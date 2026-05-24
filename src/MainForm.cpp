@@ -226,6 +226,7 @@ void MainForm::ApplyDarkTheme()
     labelRawData->ForeColor          = textOn;
     labelDeviceTypeHeader->ForeColor = textOn;
     labelAxesHeader->ForeColor       = textOn;
+    checkOnlyConnected->ForeColor    = textOn;
 
     // ComboBox
     comboBoxDevice->BackColor = bgPanel;
@@ -374,6 +375,7 @@ void MainForm::ApplyLocalization()
 
     labelDevice->Text         = Localization::T(L"label.device");
     buttonRefresh->Text       = Localization::T(L"button.refresh");
+    checkOnlyConnected->Text  = Localization::T(L"label.onlyConnected");
     labelOemNameCaption->Text = Localization::T(L"label.oemNameCaption");
     labelOemDataCaption->Text = Localization::T(L"label.oemDataCaption");
     labelDwNumButtons->Text   = Localization::T(L"label.dwNumButtons");
@@ -467,7 +469,7 @@ void MainForm::RefreshDeviceList()
     _refreshing = true;
 
     try {
-        auto devices = RegistryEngine::ScanDevices();
+        auto devices = RegistryEngine::ScanDevices(checkOnlyConnected->Checked);
 
         for (const auto& d : devices) {
             String^ dn = gcnew String(d.displayName.c_str());
@@ -511,6 +513,15 @@ void MainForm::RefreshDeviceList()
 
 void MainForm::buttonRefresh_Click(System::Object^ sender, System::EventArgs^ e)
 {
+    RefreshDeviceList();
+}
+
+// Переключение фильтра «только подключённые»: запоминаем выбор в settings.ini
+// и перечитываем список (снятая галочка показывает все устройства из реестра —
+// можно сделать бэкап устройства, которое сейчас не подключено).
+void MainForm::checkOnlyConnected_CheckedChanged(System::Object^ sender, System::EventArgs^ e)
+{
+    Localization::SaveShowOnlyConnected(checkOnlyConnected->Checked);
     RefreshDeviceList();
 }
 

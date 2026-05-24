@@ -123,6 +123,9 @@
   <data name="label.device" xml:space="preserve">
     <value>Устройство:</value>
   </data>
+  <data name="label.onlyConnected" xml:space="preserve">
+    <value>Только подключённые</value>
+  </data>
   <data name="label.oemNameCaption" xml:space="preserve">
     <value>Название устройства (OEMName):</value>
   </data>

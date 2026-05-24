@@ -132,42 +132,83 @@ String^ Localization::GetSettingsPath()
     return Path::Combine(appData, L"WinJoyTweaker", L"settings.ini");
 }
 
-Localization::Language Localization::LoadPreference()
+// Читает весь settings.ini в словарь "ключ(в нижнем регистре) → значение".
+// Пустой словарь, если файла нет или чтение упало.
+static Dictionary<String^, String^>^ ReadSettings(String^ path)
 {
+    auto kv = gcnew Dictionary<String^, String^>(StringComparer::OrdinalIgnoreCase);
     try {
-        String^ path = GetSettingsPath();
-        if (!File::Exists(path)) return Language::Auto;
-
+        if (!File::Exists(path)) return kv;
         for each (String^ line in File::ReadAllLines(path)) {
             String^ s = line->Trim();
-            if (s->StartsWith(L"language=", StringComparison::OrdinalIgnoreCase)) {
-                String^ value = s->Substring(9)->Trim()->ToLowerInvariant();
-                if (value == L"ru") return Language::Russian;
-                if (value == L"en") return Language::English;
-                return Language::Auto;
-            }
+            int eq = s->IndexOf(L'=');
+            if (eq <= 0) continue;
+            kv[s->Substring(0, eq)->Trim()] = s->Substring(eq + 1)->Trim();
         }
     } catch (...) {}
+    return kv;
+}
+
+// Перезаписывает settings.ini всеми парами из словаря. Merge-aware вызывающий
+// сначала читает существующие ключи через ReadSettings, меняет нужный и пишет
+// весь набор — так сохранение одного параметра не затирает другие.
+static void WriteSettings(String^ path, Dictionary<String^, String^>^ kv)
+{
+    try {
+        String^ dir = Path::GetDirectoryName(path);
+        if (!Directory::Exists(dir)) Directory::CreateDirectory(dir);
+
+        System::Text::StringBuilder^ sb = gcnew System::Text::StringBuilder();
+        for each (KeyValuePair<String^, String^> p in kv)
+            sb->Append(p.Key)->Append(L'=')->Append(p.Value)->Append(L"\r\n");
+        File::WriteAllText(path, sb->ToString());
+    } catch (...) {
+        // Не критично: если не получилось сохранить — просто не запомним выбор.
+    }
+}
+
+Localization::Language Localization::LoadPreference()
+{
+    auto kv = ReadSettings(GetSettingsPath());
+    String^ value;
+    if (kv->TryGetValue(L"language", value)) {
+        value = value->ToLowerInvariant();
+        if (value == L"ru") return Language::Russian;
+        if (value == L"en") return Language::English;
+    }
     return Language::Auto;
 }
 
 void Localization::SavePreference(Language pref)
 {
-    try {
-        String^ path = GetSettingsPath();
-        String^ dir  = Path::GetDirectoryName(path);
-        if (!Directory::Exists(dir)) Directory::CreateDirectory(dir);
-
-        String^ value;
-        switch (pref) {
-            case Language::Russian: value = L"ru"; break;
-            case Language::English: value = L"en"; break;
-            default:                value = L"auto"; break;
-        }
-        File::WriteAllText(path, L"language=" + value + L"\r\n");
-    } catch (...) {
-        // Не критично: если не получилось сохранить — просто не запомним выбор.
+    String^ path = GetSettingsPath();
+    auto kv = ReadSettings(path);   // сохраняем прочие ключи (onlyConnected и т.п.)
+    switch (pref) {
+        case Language::Russian: kv[L"language"] = L"ru";   break;
+        case Language::English: kv[L"language"] = L"en";   break;
+        default:                kv[L"language"] = L"auto"; break;
     }
+    WriteSettings(path, kv);
+}
+
+bool Localization::LoadShowOnlyConnected()
+{
+    auto kv = ReadSettings(GetSettingsPath());
+    String^ value;
+    if (kv->TryGetValue(L"onlyConnected", value)) {
+        value = value->ToLowerInvariant();
+        // Любое явное «выкл» снимает фильтр; всё прочее (и отсутствие) — true.
+        if (value == L"false" || value == L"0") return false;
+    }
+    return true;
+}
+
+void Localization::SaveShowOnlyConnected(bool onlyConnected)
+{
+    String^ path = GetSettingsPath();
+    auto kv = ReadSettings(path);   // сохраняем прочие ключи (language)
+    kv[L"onlyConnected"] = onlyConnected ? L"true" : L"false";
+    WriteSettings(path, kv);
 }
 
 void Localization::ApplyPreference(Language pref)

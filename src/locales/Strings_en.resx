@@ -123,6 +123,9 @@
   <data name="label.device" xml:space="preserve">
     <value>Device:</value>
   </data>
+  <data name="label.onlyConnected" xml:space="preserve">
+    <value>Connected only</value>
+  </data>
   <data name="label.oemNameCaption" xml:space="preserve">
     <value>Device name (OEMName):</value>
   </data>
