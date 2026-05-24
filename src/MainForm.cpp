@@ -1261,10 +1261,21 @@ void MainForm::PopulateNamesGrids(const DeviceData& data)
 }
 
 // Рекурсивно переносит нативный InspectorNode в дерево TreeView.
+// Подпись локализуется: labelKey не пуст → T(labelKey) [+ ": " + value];
+// пуст → value выводится как есть (техн. термины и значения от драйвера).
 static System::Windows::Forms::TreeNode^ BuildTreeNode(const InspectorNode& src)
 {
+    String^ value = gcnew String(src.value.c_str());
+    String^ text;
+    if (!src.labelKey.empty()) {
+        String^ label = Localization::T(gcnew String(src.labelKey.c_str()));
+        text = (value->Length > 0) ? (label + L": " + value) : label;
+    } else {
+        text = value;
+    }
+
     System::Windows::Forms::TreeNode^ node =
-        gcnew System::Windows::Forms::TreeNode(gcnew String(src.text.c_str()));
+        gcnew System::Windows::Forms::TreeNode(text);
     for (const auto& child : src.children)
         node->Nodes->Add(BuildTreeNode(child));
     return node;

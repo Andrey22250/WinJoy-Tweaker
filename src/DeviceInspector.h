@@ -15,9 +15,12 @@
 // вернётся InspectError::NotConnected.
 // =====================================================================
 
-// Узел дерева сведений: текст + вложенные узлы.
+// Узел дерева сведений. Подпись локализуется в managed-слое: если labelKey
+// не пуст — текст узла = Localization::T(labelKey) [+ ": " + value]; если пуст
+// — value выводится как есть (для технических терминов и значений от драйвера).
 struct InspectorNode {
-    std::wstring               text;
+    std::wstring               labelKey;   // ключ локализации подписи (или пусто)
+    std::wstring               value;      // значение либо весь текст узла
     std::vector<InspectorNode> children;
 };
 

@@ -394,6 +394,81 @@
   <data name="info.queryFailed" xml:space="preserve">
     <value>Не удалось получить сведения об устройстве через DirectInput.</value>
   </data>
+  <data name="info.devType" xml:space="preserve">
+    <value>Тип устройства</value>
+  </data>
+  <data name="info.axesCount" xml:space="preserve">
+    <value>Осей</value>
+  </data>
+  <data name="info.buttonsCount" xml:space="preserve">
+    <value>Кнопок</value>
+  </data>
+  <data name="info.povCount" xml:space="preserve">
+    <value>POV</value>
+  </data>
+  <data name="info.firmwareRev" xml:space="preserve">
+    <value>Версия прошивки</value>
+  </data>
+  <data name="info.hardwareRev" xml:space="preserve">
+    <value>Версия железа</value>
+  </data>
+  <data name="info.ffbDriverVer" xml:space="preserve">
+    <value>Версия FFB-драйвера</value>
+  </data>
+  <data name="info.deviceFlags" xml:space="preserve">
+    <value>Флаги устройства</value>
+  </data>
+  <data name="info.autoCenterOn" xml:space="preserve">
+    <value>Автоцентр: вкл</value>
+  </data>
+  <data name="info.autoCenterOff" xml:space="preserve">
+    <value>Автоцентр: выкл</value>
+  </data>
+  <data name="info.axisModeRel" xml:space="preserve">
+    <value>Режим осей: относительный</value>
+  </data>
+  <data name="info.axisModeAbs" xml:space="preserve">
+    <value>Режим осей: абсолютный</value>
+  </data>
+  <data name="info.bufferSize" xml:space="preserve">
+    <value>Размер буфера чтения</value>
+  </data>
+  <data name="info.ffbSamplePeriod" xml:space="preserve">
+    <value>Период сэмпла</value>
+  </data>
+  <data name="info.ffbMinTime" xml:space="preserve">
+    <value>Мин. время</value>
+  </data>
+  <data name="info.sectionEffects" xml:space="preserve">
+    <value>Поддерживаемые эффекты</value>
+  </data>
+  <data name="info.sectionAxes" xml:space="preserve">
+    <value>Оси</value>
+  </data>
+  <data name="info.axisType" xml:space="preserve">
+    <value>Тип</value>
+  </data>
+  <data name="info.axisOfs" xml:space="preserve">
+    <value>Смещение (dwOfs)</value>
+  </data>
+  <data name="info.axisFfbMaxForce" xml:space="preserve">
+    <value>Макс. сила FFB</value>
+  </data>
+  <data name="info.axisFfbForceRes" xml:space="preserve">
+    <value>Разрешение силы FFB</value>
+  </data>
+  <data name="info.axisRange" xml:space="preserve">
+    <value>Логический диапазон</value>
+  </data>
+  <data name="info.axisDeadZone" xml:space="preserve">
+    <value>Мёртвая зона</value>
+  </data>
+  <data name="info.axisSaturation" xml:space="preserve">
+    <value>Зона насыщения</value>
+  </data>
+  <data name="info.axisGranularity" xml:space="preserve">
+    <value>Гранулярность</value>
+  </data>
   <data name="axes.gridHeader" xml:space="preserve">
     <value>Оси</value>
   </data>

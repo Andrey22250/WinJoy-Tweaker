@@ -41,11 +41,20 @@ const wchar_t* AxisTypeName(const GUID& g)
     return L"?";
 }
 
-// Удобный helper добавления узла "подпись: значение".
-void AddLeaf(InspectorNode& parent, const std::wstring& label, const std::wstring& value)
+// Узел с локализуемой подписью: "T(labelKey): value".
+void AddLeaf(InspectorNode& parent, const std::wstring& labelKey, const std::wstring& value)
 {
     InspectorNode n;
-    n.text = label + L": " + value;
+    n.labelKey = labelKey;
+    n.value    = value;
+    parent.children.push_back(std::move(n));
+}
+
+// Узел с готовым (нелокализуемым) текстом — техн. термины и значения драйвера.
+void AddText(InspectorNode& parent, const std::wstring& text)
+{
+    InspectorNode n;
+    n.value = text;   // labelKey пуст
     parent.children.push_back(std::move(n));
 }
 
@@ -83,14 +92,14 @@ BOOL CALLBACK EnumAxesCb(LPCDIDEVICEOBJECTINSTANCEW obj, LPVOID pv)
     AxisEnumCtx* c = static_cast<AxisEnumCtx*>(pv);
 
     InspectorNode axis;
-    axis.text = obj->tszName;
+    axis.value = obj->tszName;   // имя оси от драйвера — не локализуем
 
-    AddLeaf(axis, L"Тип", AxisTypeName(obj->guidType));
-    AddLeaf(axis, L"Смещение (dwOfs)", std::to_wstring(obj->dwOfs));
+    AddLeaf(axis, L"info.axisType", AxisTypeName(obj->guidType));
+    AddLeaf(axis, L"info.axisOfs", std::to_wstring(obj->dwOfs));
 
     if (obj->dwType & DIDFT_FFACTUATOR) {
-        AddLeaf(axis, L"Макс. сила FFB", std::to_wstring(obj->dwFFMaxForce));
-        AddLeaf(axis, L"Разрешение силы FFB", std::to_wstring(obj->dwFFForceResolution));
+        AddLeaf(axis, L"info.axisFfbMaxForce", std::to_wstring(obj->dwFFMaxForce));
+        AddLeaf(axis, L"info.axisFfbForceRes", std::to_wstring(obj->dwFFForceResolution));
     }
 
     // Диапазон / мёртвая зона / насыщение / гранулярность — по ID объекта.
@@ -100,24 +109,24 @@ BOOL CALLBACK EnumAxesCb(LPCDIDEVICEOBJECTINSTANCEW obj, LPVOID pv)
     range.diph.dwHow        = DIPH_BYID;
     range.diph.dwObj        = obj->dwType;
     if (SUCCEEDED(c->dev->GetProperty(DIPROP_RANGE, &range.diph)))
-        AddLeaf(axis, L"Логический диапазон",
+        AddLeaf(axis, L"info.axisRange",
             std::to_wstring(range.lMin) + L" … " + std::to_wstring(range.lMax));
 
-    auto readDword = [&](const GUID& prop, const std::wstring& label) {
+    auto readDword = [&](const GUID& prop, const std::wstring& key) {
         DIPROPDWORD dw = {};
         dw.diph.dwSize       = sizeof(DIPROPDWORD);
         dw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
         dw.diph.dwHow        = DIPH_BYID;
         dw.diph.dwObj        = obj->dwType;
         if (SUCCEEDED(c->dev->GetProperty(prop, &dw.diph)))
-            AddLeaf(axis, label, std::to_wstring(dw.dwData));
+            AddLeaf(axis, key, std::to_wstring(dw.dwData));
     };
-    readDword(DIPROP_DEADZONE,    L"Мёртвая зона");
-    readDword(DIPROP_SATURATION,  L"Зона насыщения");
-    readDword(DIPROP_GRANULARITY, L"Гранулярность");
+    readDword(DIPROP_DEADZONE,    L"info.axisDeadZone");
+    readDword(DIPROP_SATURATION,  L"info.axisSaturation");
+    readDword(DIPROP_GRANULARITY, L"info.axisGranularity");
 
-    AddLeaf(axis, L"dwType", Hex32(obj->dwType));
-    AddLeaf(axis, L"dwFlags", Hex32(obj->dwFlags));
+    AddText(axis, L"dwType: " + Hex32(obj->dwType));
+    AddText(axis, L"dwFlags: " + Hex32(obj->dwFlags));
 
     c->axesParent->children.push_back(std::move(axis));
     return DIENUM_CONTINUE;
@@ -128,7 +137,7 @@ BOOL CALLBACK EnumAxesCb(LPCDIDEVICEOBJECTINSTANCEW obj, LPVOID pv)
 BOOL CALLBACK EnumEffectsCb(LPCDIEFFECTINFOW info, LPVOID pv)
 {
     InspectorNode* parent = static_cast<InspectorNode*>(pv);
-    AddLeaf(*parent, L"Эффект", info->tszName);
+    AddText(*parent, info->tszName);   // имя эффекта от драйвера — не локализуем
     return DIENUM_CONTINUE;
 }
 
@@ -201,49 +210,50 @@ InspectorResult Inspect(const std::wstring& oemKey, HWND ownerWindow)
 
     // --- Корневой узел устройства ---
     InspectorNode& root = result.root;
-    root.text = inst.tszProductName[0] ? std::wstring(inst.tszProductName) : oemKey;
+    root.value = inst.tszProductName[0] ? std::wstring(inst.tszProductName) : oemKey;
 
-    AddLeaf(root, L"Instance GUID",  GuidStr(inst.guidInstance));
-    AddLeaf(root, L"Product GUID",   GuidStr(inst.guidProduct));
+    // Технические термины (GUID/VID/PID/Usage) — вербатим, одинаково в RU/EN.
+    AddText(root, L"Instance GUID: " + GuidStr(inst.guidInstance));
+    AddText(root, L"Product GUID: "  + GuidStr(inst.guidProduct));
     {
         wchar_t vp[16];
-        swprintf_s(vp, L"VID_%04X", find.vid);  AddLeaf(root, L"VID", vp);
-        swprintf_s(vp, L"PID_%04X", find.pid);  AddLeaf(root, L"PID", vp);
+        swprintf_s(vp, L"VID_%04X", find.vid);  AddText(root, std::wstring(L"VID: ") + vp);
+        swprintf_s(vp, L"PID_%04X", find.pid);  AddText(root, std::wstring(L"PID: ") + vp);
     }
-    AddLeaf(root, L"Тип устройства",     Hex32(caps.dwDevType));
-    AddLeaf(root, L"Instance name",      inst.tszInstanceName);
-    AddLeaf(root, L"Product name",       inst.tszProductName);
-    AddLeaf(root, L"FFB Driver GUID",    GuidStr(inst.guidFFDriver));
-    AddLeaf(root, L"Usage page",         Hex32(inst.wUsagePage));
-    AddLeaf(root, L"Usage",              Hex32(inst.wUsage));
-    AddLeaf(root, L"Осей",               std::to_wstring(caps.dwAxes));
-    AddLeaf(root, L"Кнопок",             std::to_wstring(caps.dwButtons));
-    AddLeaf(root, L"POV",                std::to_wstring(caps.dwPOVs));
-    AddLeaf(root, L"Версия прошивки",    std::to_wstring(caps.dwFirmwareRevision));
-    AddLeaf(root, L"Версия железа",      std::to_wstring(caps.dwHardwareRevision));
-    AddLeaf(root, L"Версия FFB-драйвера", std::to_wstring(caps.dwFFDriverVersion));
-    AddLeaf(root, L"Флаги устройства",   Hex32(caps.dwFlags));
+    AddLeaf(root, L"info.devType",        Hex32(caps.dwDevType));
+    AddText(root, L"Instance name: " + std::wstring(inst.tszInstanceName));
+    AddText(root, L"Product name: "  + std::wstring(inst.tszProductName));
+    AddText(root, L"FFB Driver GUID: " + GuidStr(inst.guidFFDriver));
+    AddText(root, L"Usage page: " + Hex32(inst.wUsagePage));
+    AddText(root, L"Usage: "      + Hex32(inst.wUsage));
+    AddLeaf(root, L"info.axesCount",      std::to_wstring(caps.dwAxes));
+    AddLeaf(root, L"info.buttonsCount",   std::to_wstring(caps.dwButtons));
+    AddLeaf(root, L"info.povCount",       std::to_wstring(caps.dwPOVs));
+    AddLeaf(root, L"info.firmwareRev",    std::to_wstring(caps.dwFirmwareRevision));
+    AddLeaf(root, L"info.hardwareRev",    std::to_wstring(caps.dwHardwareRevision));
+    AddLeaf(root, L"info.ffbDriverVer",   std::to_wstring(caps.dwFFDriverVersion));
+    AddLeaf(root, L"info.deviceFlags",    Hex32(caps.dwFlags));
 
     DWORD tmp = 0;
     if (ReadDeviceDword(dev, DIPROP_AUTOCENTER, tmp))
-        AddLeaf(root, L"Автоцентр", tmp ? L"Вкл" : L"Выкл");
+        AddLeaf(root, tmp ? L"info.autoCenterOn" : L"info.autoCenterOff", L"");
     if (ReadDeviceDword(dev, DIPROP_AXISMODE, tmp))
-        AddLeaf(root, L"Режим осей", tmp == DIPROPAXISMODE_REL ? L"Относительный" : L"Абсолютный");
+        AddLeaf(root, tmp == DIPROPAXISMODE_REL ? L"info.axisModeRel" : L"info.axisModeAbs", L"");
     if (ReadDeviceDword(dev, DIPROP_BUFFERSIZE, tmp))
-        AddLeaf(root, L"Размер буфера чтения", std::to_wstring(tmp));
+        AddLeaf(root, L"info.bufferSize", std::to_wstring(tmp));
 
     // --- Раздел FFB ---
     if (caps.dwFlags & DIDC_FORCEFEEDBACK) {
         InspectorNode ffb;
-        ffb.text = L"Force Feedback";
+        ffb.value = L"Force Feedback";   // термин — вербатим
         DWORD gain = 0;
         if (ReadDeviceDword(dev, DIPROP_FFGAIN, gain))
-            AddLeaf(ffb, L"Gain", std::to_wstring(gain));
-        AddLeaf(ffb, L"Период сэмпла", std::to_wstring(caps.dwFFSamplePeriod));
-        AddLeaf(ffb, L"Мин. время", std::to_wstring(caps.dwFFMinTimeResolution));
+            AddText(ffb, L"Gain: " + std::to_wstring(gain));
+        AddLeaf(ffb, L"info.ffbSamplePeriod", std::to_wstring(caps.dwFFSamplePeriod));
+        AddLeaf(ffb, L"info.ffbMinTime", std::to_wstring(caps.dwFFMinTimeResolution));
 
         InspectorNode effects;
-        effects.text = L"Поддерживаемые эффекты";
+        effects.labelKey = L"info.sectionEffects";
         dev->EnumEffects(EnumEffectsCb, &effects, DIEFT_ALL);
         if (!effects.children.empty())
             ffb.children.push_back(std::move(effects));
@@ -253,7 +263,7 @@ InspectorResult Inspect(const std::wstring& oemKey, HWND ownerWindow)
 
     // --- Раздел осей ---
     InspectorNode axesNode;
-    axesNode.text = L"Оси";
+    axesNode.labelKey = L"info.sectionAxes";
     AxisEnumCtx actx{ dev, &axesNode };
     dev->EnumObjects(EnumAxesCb, &actx, DIDFT_AXIS);
     if (!axesNode.children.empty())
