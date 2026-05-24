@@ -1,7 +1,8 @@
 ###############################################################################
 # Set default behavior to automatically normalize line endings.
+# Working tree uses CRLF (Windows / Visual Studio); repo stores LF.
 ###############################################################################
-* text=auto
+* text=auto eol=crlf
 
 ###############################################################################
 # Set default behavior for command prompt diff.
