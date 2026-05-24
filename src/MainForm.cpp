@@ -1302,7 +1302,12 @@ void MainForm::PopulateDeviceInfo(System::String^ oemKey)
         String^ msg = (res.errorCode == InspectError::NotConnected)
             ? Localization::T(L"info.notConnected")
             : Localization::T(L"info.queryFailed");
-        treeDeviceInfo->Nodes->Add(gcnew System::Windows::Forms::TreeNode(msg));
+        // TreeView не переносит длинные строки (появляется горизонтальный
+        // слайдер) — разбиваем сообщение на отдельные узлы по переводам строк.
+        array<String^>^ lines = msg->Split('\n');
+        for each (String^ line in lines)
+            treeDeviceInfo->Nodes->Add(
+                gcnew System::Windows::Forms::TreeNode(line->Trim()));
     }
 
     treeDeviceInfo->EndUpdate();

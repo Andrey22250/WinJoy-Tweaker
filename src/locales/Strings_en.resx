@@ -389,7 +389,9 @@ After creation you can edit and apply them.</value>
     <value>Information</value>
   </data>
   <data name="info.notConnected" xml:space="preserve">
-    <value>Device is not connected — DirectInput details are unavailable. Unchecking "Connected only" helps only for backups; the device must be connected for detailed info.</value>
+    <value>Device is not connected — DirectInput details are unavailable.
+"Connected only" is unchecked just to back up a disconnected device.
+The device must be connected for detailed info.</value>
   </data>
   <data name="info.queryFailed" xml:space="preserve">
     <value>Failed to query device details via DirectInput.</value>
