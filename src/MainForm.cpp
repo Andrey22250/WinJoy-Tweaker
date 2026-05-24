@@ -1146,6 +1146,16 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
         return;
     }
 
+    // Имена осей/кнопок — точный снимок: пишем ровно то, что в бэкапе, включая
+    // пустые имена (так восстановление работает и как сброс имени). Best-effort:
+    // WriteAxisName/WriteButtonName не создают отсутствующие подключи, поэтому
+    // имена осей/кнопок, которых нет у выбранного устройства, тихо пропускаются
+    // — основной результат (OEMData/OEMName) уже зафиксирован выше.
+    for (const auto& a : parsed.axes)
+        RegistryEngine::WriteAxisName(oemKey, a.index, a.name);
+    for (const auto& b : parsed.buttons)
+        RegistryEngine::WriteButtonName(oemKey, b.index, b.name);
+
     LoadDeviceData();
     SetStatus(Localization::T(L"restore.success", dlg->SafeFileName), StatusSuccess);
 }
