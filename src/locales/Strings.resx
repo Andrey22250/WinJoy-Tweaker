@@ -231,6 +231,9 @@
   <data name="status.devicesConnected" xml:space="preserve">
     <value>Подключено устройств: {0}</value>
   </data>
+  <data name="status.devicesTotal" xml:space="preserve">
+    <value>Всего устройств: {0}</value>
+  </data>
   <data name="status.noDevices" xml:space="preserve">
     <value>Подключённые контроллеры не обнаружены.</value>
   </data>

@@ -231,6 +231,9 @@
   <data name="status.devicesConnected" xml:space="preserve">
     <value>Connected devices: {0}</value>
   </data>
+  <data name="status.devicesTotal" xml:space="preserve">
+    <value>Total devices: {0}</value>
+  </data>
   <data name="status.noDevices" xml:space="preserve">
     <value>No connected controllers detected.</value>
   </data>

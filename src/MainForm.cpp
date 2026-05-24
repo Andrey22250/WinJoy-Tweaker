@@ -481,7 +481,9 @@ void MainForm::RefreshDeviceList()
             SetControlsEnabled(true);
             comboBoxDevice->SelectedIndex = 0;
             // LoadDeviceData() вызовется автоматически через SelectedIndexChanged
-            SetStatus(Localization::T(L"status.devicesConnected", (int)devices.size()), StatusSuccess);
+            String^ countKey = checkOnlyConnected->Checked
+                ? L"status.devicesConnected" : L"status.devicesTotal";
+            SetStatus(Localization::T(countKey, (int)devices.size()), StatusSuccess);
         } else {
             textBoxOemName->Text = String::Empty;
             ClearFlagControls();
