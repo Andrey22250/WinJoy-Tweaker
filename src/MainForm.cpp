@@ -77,6 +77,27 @@ ref struct DeviceInfo {
     virtual String^ ToString() override { return DisplayName; }
 };
 
+// Выбранное в ComboBox устройство (или nullptr, если ничего не выбрано).
+static DeviceInfo^ GetSelectedDevice(System::Windows::Forms::ComboBox^ combo)
+{
+    return dynamic_cast<DeviceInfo^>(combo->SelectedItem);
+}
+
+// Единый «плоский» стиль кнопки тёмной темы. back — заливка, hover/press —
+// цвета при наведении/нажатии; цвет текста и рамки общий для всех кнопок.
+static void StyleFlatButton(System::Windows::Forms::Button^ b,
+                            System::Drawing::Color back,
+                            System::Drawing::Color hover,
+                            System::Drawing::Color press)
+{
+    b->ForeColor = System::Drawing::Color::FromArgb(220, 220, 220);
+    b->BackColor = back;
+    b->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+    b->FlatAppearance->BorderColor        = System::Drawing::Color::FromArgb(63, 63, 70);
+    b->FlatAppearance->MouseOverBackColor = hover;
+    b->FlatAppearance->MouseDownBackColor = press;
+}
+
 // -----------------------------------------------------------------------
 // Подмена стандартного tabMain на FlatTabControl.
 // InitializeComponent создаёт обычный TabControl (чтобы дизайнер открывался);
@@ -235,44 +256,24 @@ void MainForm::ApplyDarkTheme()
     comboBoxDevice->ForeColor = textOn;
     comboBoxDevice->FlatStyle = FlatStyle::Flat;
 
-    // Кнопка
-    buttonRefresh->BackColor = bgPanel;
-    buttonRefresh->ForeColor = textOn;
-    buttonRefresh->FlatStyle = FlatStyle::Flat;
-    buttonRefresh->FlatAppearance->BorderColor        = border;
-    buttonRefresh->FlatAppearance->MouseOverBackColor = Color::FromArgb(62, 62, 64);
-    buttonRefresh->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 122, 204);
-
     panelButtons->BackColor = bgDark;
 
-    buttonOpenBackups->BackColor = bgPanel;
-    buttonOpenBackups->ForeColor = textOn;
-    buttonOpenBackups->FlatStyle = FlatStyle::Flat;
-    buttonOpenBackups->FlatAppearance->BorderColor        = border;
-    buttonOpenBackups->FlatAppearance->MouseOverBackColor = Color::FromArgb(62, 62, 64);
-    buttonOpenBackups->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 122, 204);
+    // Кнопки: нейтральные (фон-панель) и акцентные (синяя заливка «Применить»).
+    // Стиль задаётся одним хелпером StyleFlatButton — без повтора по каждой кнопке.
+    Color neutralHover = Color::FromArgb(62, 62, 64);
+    Color accentBack   = Color::FromArgb(0, 99, 177);
+    Color accentHover  = Color::FromArgb(0, 122, 204);
+    Color accentPress  = Color::FromArgb(0, 80, 150);
 
-    buttonBackup->BackColor = bgPanel;
-    buttonBackup->ForeColor = textOn;
-    buttonBackup->FlatStyle = FlatStyle::Flat;
-    buttonBackup->FlatAppearance->BorderColor        = border;
-    buttonBackup->FlatAppearance->MouseOverBackColor = Color::FromArgb(62, 62, 64);
-    buttonBackup->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 122, 204);
+    array<Button^>^ neutralButtons = gcnew array<Button^> {
+        buttonRefresh, buttonOpenBackups, buttonBackup, buttonRestore, buttonReloadNames
+    };
+    for each (Button^ b in neutralButtons)
+        StyleFlatButton(b, bgPanel, neutralHover, accentHover);
 
-    buttonRestore->BackColor = bgPanel;
-    buttonRestore->ForeColor = textOn;
-    buttonRestore->FlatStyle = FlatStyle::Flat;
-    buttonRestore->FlatAppearance->BorderColor        = border;
-    buttonRestore->FlatAppearance->MouseOverBackColor = Color::FromArgb(62, 62, 64);
-    buttonRestore->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 122, 204);
-
-    // «Применить» — акцентная синяя заливка для различимости
-    buttonApply->BackColor = Color::FromArgb(0, 99, 177);
-    buttonApply->ForeColor = textOn;
-    buttonApply->FlatStyle = FlatStyle::Flat;
-    buttonApply->FlatAppearance->BorderColor        = border;
-    buttonApply->FlatAppearance->MouseOverBackColor = Color::FromArgb(0, 122, 204);
-    buttonApply->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 80, 150);
+    array<Button^>^ accentButtons = gcnew array<Button^> { buttonApply, buttonApplyNames };
+    for each (Button^ b in accentButtons)
+        StyleFlatButton(b, accentBack, accentHover, accentPress);
 
     // TextBox'ы — единый стиль для всех (включая OEMName и оба read-only поля)
     array<TextBox^>^ textBoxes = gcnew array<TextBox^> {
@@ -356,21 +357,6 @@ void MainForm::ApplyDarkTheme()
         g->EditingControlShowing += gcnew DataGridViewEditingControlShowingEventHandler(
             this, &MainForm::nameGrid_EditingControlShowing);
     }
-
-    // Кнопки вкладки
-    array<Button^>^ axesBtns = gcnew array<Button^> { buttonReloadNames, buttonApplyNames };
-    for each (Button^ b in axesBtns) {
-        b->BackColor = bgPanel;
-        b->ForeColor = textOn;
-        b->FlatStyle = FlatStyle::Flat;
-        b->FlatAppearance->BorderColor        = border;
-        b->FlatAppearance->MouseOverBackColor = Color::FromArgb(62, 62, 64);
-        b->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 122, 204);
-    }
-    // «Применить имена» — акцентная синяя, как buttonApply
-    buttonApplyNames->BackColor = Color::FromArgb(0, 99, 177);
-    buttonApplyNames->FlatAppearance->MouseOverBackColor = Color::FromArgb(0, 122, 204);
-    buttonApplyNames->FlatAppearance->MouseDownBackColor = Color::FromArgb(0, 80, 150);
 }
 
 // -----------------------------------------------------------------------
@@ -625,7 +611,7 @@ void MainForm::ClearFlagControls()
 // -----------------------------------------------------------------------
 void MainForm::LoadDeviceData()
 {
-    DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
+    DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
     if (sel == nullptr) {
         textBoxOemName->Text = String::Empty;
         ClearFlagControls();
@@ -853,7 +839,7 @@ bool MainForm::OfferCreateStockData()
     // Подавляем во время программного обновления списка (см. _refreshing).
     if (_refreshing) return false;
 
-    DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
+    DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
     if (sel == nullptr) return false;
 
     // Не предлагаем повторно тем устройствам, по которым уже был отказ в сессии.
@@ -985,7 +971,7 @@ void MainForm::nameCell_KeyPress(System::Object^ sender, System::Windows::Forms:
 // -----------------------------------------------------------------------
 void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
 {
-    DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
+    DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
     if (sel == nullptr) { SetStatus(Localization::T(L"status.noSelection"), StatusError); return; }
     msclr::interop::marshal_context ctx;
     std::wstring oemKey = ctx.marshal_as<std::wstring>(sel->RegistryKey);
@@ -1016,7 +1002,7 @@ void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
 // -----------------------------------------------------------------------
 void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
 {
-    DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
+    DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
     if (sel == nullptr) { SetStatus(Localization::T(L"status.noSelection"), StatusError); return; }
     msclr::interop::marshal_context ctxKey;
     std::wstring oemKey = ctxKey.marshal_as<std::wstring>(sel->RegistryKey);
@@ -1123,7 +1109,7 @@ void MainForm::buttonOpenBackups_Click(System::Object^ sender, System::EventArgs
 // -----------------------------------------------------------------------
 void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
 {
-    DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
+    DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
     if (sel == nullptr) {
         SetStatus(Localization::T(L"status.noSelection"), StatusError);
         return;
@@ -1351,7 +1337,7 @@ void MainForm::buttonReloadNames_Click(System::Object^ sender, System::EventArgs
 // -----------------------------------------------------------------------
 void MainForm::buttonApplyNames_Click(System::Object^ sender, System::EventArgs^ e)
 {
-    DeviceInfo^ sel = dynamic_cast<DeviceInfo^>(comboBoxDevice->SelectedItem);
+    DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
     if (sel == nullptr) {
         SetStatus(Localization::T(L"status.noSelection"), StatusError);
         return;
