@@ -41,6 +41,30 @@ static String^ BackupErrorText(BackupError code)
     }
 }
 
+// Допустимые символы имени оси/кнопки: латиница, цифры, пробел и ()-_/.
+// Единый предикат — чтобы фильтр ввода (nameCell_KeyPress) и страховка при
+// записи (SanitizeName) не разошлись.
+static bool IsAllowedNameChar(wchar_t c)
+{
+    return (c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z')
+        || (c >= L'0' && c <= L'9') || c == L' '
+        || c == L'(' || c == L')' || c == L'-' || c == L'_' || c == L'/';
+}
+
+// Страховка на этапе записи: KeyPress блокирует ввод с клавиатуры, но вставку
+// (Ctrl+V) и программную подстановку не ловит. Здесь отбрасываем недопустимые
+// символы и режем длину до 32 — чтобы в реестр не попало ничего постороннего.
+static const size_t kMaxNameLen = 32;
+static std::wstring SanitizeName(const std::wstring& in)
+{
+    std::wstring out;
+    for (wchar_t c : in) {
+        if (out.size() >= kMaxNameLen) break;
+        if (IsAllowedNameChar(c)) out.push_back(c);
+    }
+    return out;
+}
+
 // -----------------------------------------------------------------------
 // Managed-обёртка над DeviceEntry для отображения в ComboBox
 // -----------------------------------------------------------------------
@@ -922,11 +946,7 @@ void MainForm::nameGrid_EditingControlShowing(System::Object^ sender,
 void MainForm::nameCell_KeyPress(System::Object^ sender, System::Windows::Forms::KeyPressEventArgs^ e)
 {
     if (e->KeyChar == '\b') return;
-    wchar_t c = e->KeyChar;
-    bool ok = (c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z')
-           || (c >= L'0' && c <= L'9') || c == L' '
-           || c == L'(' || c == L')' || c == L'-' || c == L'_' || c == L'/';
-    if (!ok) e->Handled = true;
+    if (!IsAllowedNameChar(e->KeyChar)) e->Handled = true;
 }
 
 // -----------------------------------------------------------------------
@@ -1230,7 +1250,7 @@ static std::vector<NamedEntry> ReadGridEntries(System::Windows::Forms::DataGridV
         NamedEntry e;
         e.index = System::Convert::ToInt32(idxBox);
         if (nameBox != nullptr)
-            e.name = ctx.marshal_as<std::wstring>(nameBox->ToString());
+            e.name = SanitizeName(ctx.marshal_as<std::wstring>(nameBox->ToString()));
         out.push_back(std::move(e));
     }
     return out;
