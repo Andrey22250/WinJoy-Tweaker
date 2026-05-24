@@ -18,6 +18,29 @@ static const int StatusNeutral = 0;  // серый
 static const int StatusSuccess = 1;  // зелёный
 static const int StatusError   = 2;  // красный
 
+// Перевод кодов ошибок нативных модулей в локализованный текст. Сами модули
+// языка UI не знают — текст выбирается здесь через Localization::T.
+static String^ RegErrorText(RegError code, LSTATUS detail)
+{
+    switch (code) {
+        case RegError::OpenKeyFailed:
+            return Localization::T(L"error.openRegistryKey", (int)detail);
+        default:
+            return String::Empty;
+    }
+}
+
+static String^ BackupErrorText(BackupError code)
+{
+    switch (code) {
+        case BackupError::OpenFileFailed: return Localization::T(L"error.backupOpenFile");
+        case BackupError::InvalidSize:    return Localization::T(L"error.backupInvalidSize");
+        case BackupError::ReadFailed:     return Localization::T(L"error.backupReadFile");
+        case BackupError::NoDeviceKey:    return Localization::T(L"error.backupNoDeviceKey");
+        default:                          return String::Empty;
+    }
+}
+
 // -----------------------------------------------------------------------
 // Managed-обёртка над DeviceEntry для отображения в ComboBox
 // -----------------------------------------------------------------------
@@ -563,8 +586,8 @@ void MainForm::LoadDeviceData()
 
     DeviceData data = RegistryEngine::ReadDeviceData(regKey);
 
-    if (!data.errorMessage.empty()) {
-        SetStatus(gcnew String(data.errorMessage.c_str()), StatusError);
+    if (data.errorCode != RegError::None) {
+        SetStatus(RegErrorText(data.errorCode, data.errorDetail), StatusError);
         ClearFlagControls();
         return;
     }
@@ -785,7 +808,7 @@ bool MainForm::OfferCreateStockData()
 
     DeviceData current = RegistryEngine::ReadDeviceData(oemKey);
     // Если ключ не открылся (ошибка) или OEMData уже есть — предлагать нечего.
-    if (!current.errorMessage.empty() || current.hasOemData) return false;
+    if (current.errorCode != RegError::None || current.hasOemData) return false;
 
     if (MessageBox::Show(this,
             Localization::T(L"create.offerText"),
@@ -1046,7 +1069,7 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
     auto parsed = BackupManager::ParseBackupFile(filePath);
     if (!parsed.valid) {
         SetStatus(Localization::T(L"restore.parseError",
-            gcnew String(parsed.errorMessage.c_str())), StatusError);
+            BackupErrorText(parsed.errorCode)), StatusError);
         return;
     }
 

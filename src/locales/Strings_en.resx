@@ -358,8 +358,8 @@ After creation you can edit and apply them.</value>
   <data name="error.backupReadFile" xml:space="preserve">
     <value>File read error.</value>
   </data>
-  <data name="error.backupNoOemData" xml:space="preserve">
-    <value>OEMData not found in file.</value>
+  <data name="error.backupNoDeviceKey" xml:space="preserve">
+    <value>No device key found in the file — this does not look like a joystick backup.</value>
   </data>
   <data name="status.numButtonsEmpty" xml:space="preserve">
     <value>Enter the button count (0–64) before applying.</value>

@@ -388,7 +388,7 @@ BackupParseResult ParseBackupFile(const std::wstring& filePath)
     HANDLE hFile = CreateFileW(filePath.c_str(), GENERIC_READ, FILE_SHARE_READ,
                                nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hFile == INVALID_HANDLE_VALUE) {
-        r.errorMessage = L"Не удалось открыть файл бэкапа.";
+        r.errorCode = BackupError::OpenFileFailed;
         return r;
     }
 
@@ -397,7 +397,7 @@ BackupParseResult ParseBackupFile(const std::wstring& filePath)
     // одного OEMData, но реалистично не превышает сотен килобайт.
     if (!GetFileSizeEx(hFile, &sz) || sz.QuadPart <= 0 || sz.QuadPart > (1024 * 1024)) {
         CloseHandle(hFile);
-        r.errorMessage = L"Некорректный размер .reg-файла.";
+        r.errorCode = BackupError::InvalidSize;
         return r;
     }
 
@@ -405,7 +405,7 @@ BackupParseResult ParseBackupFile(const std::wstring& filePath)
     DWORD read = 0;
     if (!ReadFile(hFile, bytes.data(), static_cast<DWORD>(bytes.size()), &read, nullptr)) {
         CloseHandle(hFile);
-        r.errorMessage = L"Ошибка чтения файла.";
+        r.errorCode = BackupError::ReadFailed;
         return r;
     }
     CloseHandle(hFile);
@@ -545,7 +545,7 @@ BackupParseResult ParseBackupFile(const std::wstring& filePath)
     // устройство к заводскому виду. Если ключа устройства нет — это не наш
     // бэкап.
     if (r.deviceKey.empty()) {
-        r.errorMessage = L"В файле не найден ключ устройства — это не похоже на бэкап джойстика.";
+        r.errorCode = BackupError::NoDeviceKey;
         return r;
     }
 

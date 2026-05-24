@@ -13,6 +13,16 @@
 // в реестр и за разбор .reg-файлов при восстановлении.
 // =====================================================================
 
+// Код ошибки разбора. Текст формирует managed-слой (Localization) —
+// нативный модуль не знает текущего языка UI.
+enum class BackupError {
+    None = 0,
+    OpenFileFailed,  // не удалось открыть .reg-файл
+    InvalidSize,     // некорректный размер файла
+    ReadFailed,      // ошибка чтения
+    NoDeviceKey,     // в файле не найден ключ устройства — не наш бэкап
+};
+
 // Результат разбора .reg-файла бэкапа.
 struct BackupParseResult {
     std::wstring             deviceKey;     // VID_xxxx&PID_yyyy из заголовка корневого ключа
@@ -21,7 +31,7 @@ struct BackupParseResult {
     std::vector<NamedEntry>  axes;          // имена осей из подключей Axes\<N>
     std::vector<NamedEntry>  buttons;       // имена кнопок из подключей Buttons\<N>
     bool                     valid = false;
-    std::wstring             errorMessage;
+    BackupError              errorCode = BackupError::None;
 };
 
 namespace BackupManager {

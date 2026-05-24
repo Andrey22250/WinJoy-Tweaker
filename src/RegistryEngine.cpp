@@ -130,8 +130,8 @@ DeviceData ReadDeviceData(const std::wstring& oemKey)
     LSTATUS st = RegOpenKeyExW(HKEY_CURRENT_USER, fullPath.c_str(),
                                0, KEY_READ, &hKey);
     if (st != ERROR_SUCCESS) {
-        result.errorMessage = L"Не удалось открыть ключ реестра (код: "
-                              + std::to_wstring(st) + L")";
+        result.errorCode   = RegError::OpenKeyFailed;
+        result.errorDetail = st;
         return result;
     }
 

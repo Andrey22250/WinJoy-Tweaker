@@ -85,6 +85,13 @@ struct NamedEntry {
     std::wstring    name;
 };
 
+// Код ошибки чтения. Текст сообщения формирует managed-слой (Localization)
+// — нативный модуль не знает текущего языка UI.
+enum class RegError {
+    None = 0,
+    OpenKeyFailed,   // не удалось открыть ключ реестра (errorDetail = LSTATUS)
+};
+
 // Полный набор данных, считанных для одного устройства из реестра.
 struct DeviceData {
     std::wstring             oemName;       // значение OEMName (REG_SZ)
@@ -93,7 +100,8 @@ struct DeviceData {
     JOYREGHWCONFIG           hwConfig   = {};
     std::vector<NamedEntry>  axes;          // содержимое подключа Axes\<N>\@
     std::vector<NamedEntry>  buttons;       // содержимое подключа Buttons\<N>\@
-    std::wstring             errorMessage;
+    RegError                 errorCode  = RegError::None;
+    LSTATUS                  errorDetail = 0; // системный код для подстановки в сообщение
 };
 
 namespace RegistryEngine {

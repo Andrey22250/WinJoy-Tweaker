@@ -358,8 +358,8 @@
   <data name="error.backupReadFile" xml:space="preserve">
     <value>Ошибка чтения файла.</value>
   </data>
-  <data name="error.backupNoOemData" xml:space="preserve">
-    <value>В файле не найдены данные OEMData.</value>
+  <data name="error.backupNoDeviceKey" xml:space="preserve">
+    <value>В файле не найден ключ устройства — это не похоже на бэкап джойстика.</value>
   </data>
   <data name="status.numButtonsEmpty" xml:space="preserve">
     <value>Введите количество кнопок (0–64) перед применением.</value>
