@@ -1227,7 +1227,7 @@ namespace WinJoytweaker {
             this->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.5F));
             this->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.Icon")));
             this->Margin = System::Windows::Forms::Padding(8);
-            this->MinimumSize = System::Drawing::Size(1039, 1136);
+            this->MinimumSize = System::Drawing::Size(1039, 1200);
             this->Name = L"MainForm";
             this->Padding = System::Windows::Forms::Padding(0, 50, 0, 0);
             this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
