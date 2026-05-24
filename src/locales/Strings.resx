@@ -385,6 +385,15 @@
   <data name="tab.axesButtons" xml:space="preserve">
     <value>Оси и кнопки</value>
   </data>
+  <data name="tab.info" xml:space="preserve">
+    <value>Информация</value>
+  </data>
+  <data name="info.notConnected" xml:space="preserve">
+    <value>Устройство не подключено — сведения DirectInput недоступны. Снимите галочку «Только подключённые» лишь для бэкапа; для подробной информации устройство должно быть подключено.</value>
+  </data>
+  <data name="info.queryFailed" xml:space="preserve">
+    <value>Не удалось получить сведения об устройстве через DirectInput.</value>
+  </data>
   <data name="axes.gridHeader" xml:space="preserve">
     <value>Оси</value>
   </data>

@@ -147,6 +147,8 @@ namespace WinJoytweaker {
         System::Windows::Forms::TabControl^         tabMain;
         System::Windows::Forms::TabPage^            tabPageOem;
         System::Windows::Forms::TabPage^            tabPageAxes;
+        System::Windows::Forms::TabPage^            tabPageInfo;
+        System::Windows::Forms::TreeView^           treeDeviceInfo;
 
         // ── Вкладка «Оси и кнопки» ────────────────────────────────────────
         System::Windows::Forms::TableLayoutPanel^   layoutAxesTab;
@@ -215,6 +217,9 @@ namespace WinJoytweaker {
         void comboBoxDevice_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e);
         void comboBoxLanguage_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e);
         void refreshDebounceTimer_Tick(System::Object^ sender, System::EventArgs^ e);
+
+        // Вкладка «Информация» — дерево возможностей устройства (DirectInput).
+        void PopulateDeviceInfo(System::String^ oemKey);
 
         // Вкладка «Оси и кнопки».
         void PopulateNamesGrids(const DeviceData& data);
@@ -302,6 +307,8 @@ namespace WinJoytweaker {
             this->tabMain = (gcnew System::Windows::Forms::TabControl());
             this->tabPageOem = (gcnew System::Windows::Forms::TabPage());
             this->tabPageAxes = (gcnew System::Windows::Forms::TabPage());
+            this->tabPageInfo = (gcnew System::Windows::Forms::TabPage());
+            this->treeDeviceInfo = (gcnew System::Windows::Forms::TreeView());
             this->layoutAxesTab = (gcnew System::Windows::Forms::TableLayoutPanel());
             this->labelAxesGridHeader = (gcnew System::Windows::Forms::Label());
             this->labelButtonsGridHeader = (gcnew System::Windows::Forms::Label());
@@ -323,6 +330,7 @@ namespace WinJoytweaker {
             this->tabMain->SuspendLayout();
             this->tabPageOem->SuspendLayout();
             this->tabPageAxes->SuspendLayout();
+            this->tabPageInfo->SuspendLayout();
             this->layoutAxesTab->SuspendLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridAxes))->BeginInit();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridButtons))->BeginInit();
@@ -982,6 +990,7 @@ namespace WinJoytweaker {
             // 
             this->tabMain->Controls->Add(this->tabPageOem);
             this->tabMain->Controls->Add(this->tabPageAxes);
+            this->tabMain->Controls->Add(this->tabPageInfo);
             this->tabMain->Dock = System::Windows::Forms::DockStyle::Fill;
             this->tabMain->Location = System::Drawing::Point(0, 50);
             this->tabMain->Name = L"tabMain";
@@ -1007,9 +1016,25 @@ namespace WinJoytweaker {
             this->tabPageAxes->Size = System::Drawing::Size(1288, 1046);
             this->tabPageAxes->TabIndex = 1;
             this->tabPageAxes->Text = L"Оси и кнопки";
-            // 
+            //
+            // tabPageInfo
+            //
+            this->tabPageInfo->Controls->Add(this->treeDeviceInfo);
+            this->tabPageInfo->Location = System::Drawing::Point(4, 34);
+            this->tabPageInfo->Name = L"tabPageInfo";
+            this->tabPageInfo->Padding = System::Windows::Forms::Padding(28);
+            this->tabPageInfo->Size = System::Drawing::Size(1288, 1046);
+            this->tabPageInfo->TabIndex = 2;
+            this->tabPageInfo->Text = L"Информация";
+            //
+            // treeDeviceInfo
+            //
+            this->treeDeviceInfo->Dock = System::Windows::Forms::DockStyle::Fill;
+            this->treeDeviceInfo->Name = L"treeDeviceInfo";
+            this->treeDeviceInfo->TabIndex = 0;
+            //
             // layoutAxesTab
-            // 
+            //
             this->layoutAxesTab->ColumnCount = 2;
             this->layoutAxesTab->ColumnStyles->Add((gcnew System::Windows::Forms::ColumnStyle(System::Windows::Forms::SizeType::Percent,
                 50)));
@@ -1197,6 +1222,7 @@ namespace WinJoytweaker {
             this->tabMain->ResumeLayout(false);
             this->tabPageOem->ResumeLayout(false);
             this->tabPageAxes->ResumeLayout(false);
+            this->tabPageInfo->ResumeLayout(false);
             this->layoutAxesTab->ResumeLayout(false);
             this->layoutAxesTab->PerformLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->dataGridAxes))->EndInit();

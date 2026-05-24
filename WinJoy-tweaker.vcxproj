@@ -136,6 +136,7 @@
     <ClCompile Include="src\MainForm.cpp" />
     <ClCompile Include="src\RegistryEngine.cpp" />
     <ClCompile Include="src\BackupManager.cpp" />
+    <ClCompile Include="src\DeviceInspector.cpp" />
     <ClCompile Include="src\locales\Localization.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -147,6 +148,7 @@
     <ClInclude Include="src\DataFieldDeselectFilter.h" />
     <ClInclude Include="src\RegistryEngine.h" />
     <ClInclude Include="src\BackupManager.h" />
+    <ClInclude Include="src\DeviceInspector.h" />
     <ClInclude Include="src\locales\Localization.h" />
   </ItemGroup>
   <ItemGroup>

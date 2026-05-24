@@ -18,6 +18,9 @@
     <ClCompile Include="src\BackupManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\DeviceInspector.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\locales\Localization.cpp">
       <Filter>src\locales</Filter>
     </ClCompile>
@@ -36,6 +39,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\BackupManager.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DeviceInspector.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\locales\Localization.h">

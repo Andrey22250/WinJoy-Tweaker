@@ -3,6 +3,7 @@
 #include "DataFieldDeselectFilter.h"
 #include "RegistryEngine.h"
 #include "BackupManager.h"
+#include "DeviceInspector.h"
 #include <msclr/marshal.h>
 #include <msclr/marshal_cppstd.h>
 #include <shellapi.h>
@@ -313,8 +314,14 @@ void MainForm::ApplyDarkTheme()
     tabMain->BackColor       = bgDark;
     tabPageOem->BackColor    = bgDark;
     tabPageAxes->BackColor   = bgDark;
+    tabPageInfo->BackColor   = bgDark;
     layoutAxesTab->BackColor = bgDark;
     panelAxesButtons->BackColor = bgDark;
+
+    treeDeviceInfo->BackColor   = bgPanel;
+    treeDeviceInfo->ForeColor   = textOn;
+    treeDeviceInfo->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
+    treeDeviceInfo->LineColor   = Color::FromArgb(110, 110, 110);
 
     labelAxesGridHeader->ForeColor    = textOn;
     labelButtonsGridHeader->ForeColor = textOn;
@@ -430,6 +437,7 @@ void MainForm::ApplyLocalization()
     // Вкладки
     tabPageOem->Text  = Localization::T(L"tab.oemData");
     tabPageAxes->Text = Localization::T(L"tab.axesButtons");
+    tabPageInfo->Text = Localization::T(L"tab.info");
 
     labelAxesGridHeader->Text    = Localization::T(L"axes.gridHeader");
     labelButtonsGridHeader->Text = Localization::T(L"buttons.gridHeader");
@@ -620,6 +628,7 @@ void MainForm::LoadDeviceData()
     if (sel == nullptr) {
         textBoxOemName->Text = String::Empty;
         ClearFlagControls();
+        treeDeviceInfo->Nodes->Clear();
         return;
     }
 
@@ -633,6 +642,10 @@ void MainForm::LoadDeviceData()
         ClearFlagControls();
         return;
     }
+
+    // Вкладка «Информация» (DirectInput) не зависит от наличия OEMData —
+    // заполняем до возможного раннего выхода для устройств без OEMData.
+    PopulateDeviceInfo(sel->RegistryKey);
 
     textBoxOemName->Text = gcnew String(data.oemName.c_str());
 
@@ -1245,6 +1258,43 @@ void MainForm::PopulateNamesGrids(const DeviceData& data)
         dataGridButtons->Rows[row]->Cells[0]->Value = e.index;
         dataGridButtons->Rows[row]->Cells[1]->Value = gcnew String(e.name.c_str());
     }
+}
+
+// Рекурсивно переносит нативный InspectorNode в дерево TreeView.
+static System::Windows::Forms::TreeNode^ BuildTreeNode(const InspectorNode& src)
+{
+    System::Windows::Forms::TreeNode^ node =
+        gcnew System::Windows::Forms::TreeNode(gcnew String(src.text.c_str()));
+    for (const auto& child : src.children)
+        node->Nodes->Add(BuildTreeNode(child));
+    return node;
+}
+
+// Вкладка «Информация»: дерево возможностей устройства через DirectInput.
+// DirectInput видит только подключённые устройства — для отключённого
+// показываем поясняющий текст вместо дерева.
+void MainForm::PopulateDeviceInfo(System::String^ oemKey)
+{
+    treeDeviceInfo->BeginUpdate();
+    treeDeviceInfo->Nodes->Clear();
+
+    msclr::interop::marshal_context ctx;
+    std::wstring key = ctx.marshal_as<std::wstring>(oemKey);
+
+    InspectorResult res = DeviceInspector::Inspect(key, (HWND)this->Handle.ToPointer());
+
+    if (res.ok) {
+        System::Windows::Forms::TreeNode^ root = BuildTreeNode(res.root);
+        treeDeviceInfo->Nodes->Add(root);
+        root->Expand();   // разворачиваем верхний уровень для удобства
+    } else {
+        String^ msg = (res.errorCode == InspectError::NotConnected)
+            ? Localization::T(L"info.notConnected")
+            : Localization::T(L"info.queryFailed");
+        treeDeviceInfo->Nodes->Add(gcnew System::Windows::Forms::TreeNode(msg));
+    }
+
+    treeDeviceInfo->EndUpdate();
 }
 
 // Чтение состояния сетки в std::vector<NamedEntry>.
