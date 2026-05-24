@@ -9,7 +9,7 @@
 
 namespace {
 
-// --- Форматирование значений -----------------------------------------
+// Форматирование значений
 
 std::wstring GuidStr(const GUID& g)
 {
@@ -58,7 +58,7 @@ void AddText(InspectorNode& parent, const std::wstring& text)
     parent.children.push_back(std::move(n));
 }
 
-// --- Поиск guidInstance по VID/PID среди подключённых -----------------
+// Поиск guidInstance по VID/PID среди подключённых
 
 struct FindCtx {
     WORD vid = 0, pid = 0;
@@ -80,7 +80,7 @@ BOOL CALLBACK FindDeviceCb(LPCDIDEVICEINSTANCEW inst, LPVOID pv)
     return DIENUM_CONTINUE;
 }
 
-// --- Перечисление осей -------------------------------------------------
+// Перечисление осей
 
 struct AxisEnumCtx {
     LPDIRECTINPUTDEVICE8W dev = nullptr;
@@ -132,7 +132,7 @@ BOOL CALLBACK EnumAxesCb(LPCDIDEVICEOBJECTINSTANCEW obj, LPVOID pv)
     return DIENUM_CONTINUE;
 }
 
-// --- Перечисление поддерживаемых эффектов -----------------------------
+// Перечисление поддерживаемых эффектов
 
 BOOL CALLBACK EnumEffectsCb(LPCDIEFFECTINFOW info, LPVOID pv)
 {
@@ -208,7 +208,7 @@ InspectorResult Inspect(const std::wstring& oemKey, HWND ownerWindow)
     inst.dwSize = sizeof(DIDEVICEINSTANCEW);
     dev->GetDeviceInfo(&inst);
 
-    // --- Корневой узел устройства ---
+    // Корневой узел устройства
     InspectorNode& root = result.root;
     root.value = inst.tszProductName[0] ? std::wstring(inst.tszProductName) : oemKey;
 
@@ -242,7 +242,7 @@ InspectorResult Inspect(const std::wstring& oemKey, HWND ownerWindow)
     if (ReadDeviceDword(dev, DIPROP_BUFFERSIZE, tmp))
         AddLeaf(root, L"info.bufferSize", std::to_wstring(tmp));
 
-    // --- Раздел FFB ---
+    // Раздел FFB
     if (caps.dwFlags & DIDC_FORCEFEEDBACK) {
         InspectorNode ffb;
         ffb.value = L"Force Feedback";   // термин — вербатим
@@ -261,7 +261,7 @@ InspectorResult Inspect(const std::wstring& oemKey, HWND ownerWindow)
         root.children.push_back(std::move(ffb));
     }
 
-    // --- Раздел осей ---
+    // Раздел осей
     InspectorNode axesNode;
     axesNode.labelKey = L"info.sectionAxes";
     AxisEnumCtx actx{ dev, &axesNode };

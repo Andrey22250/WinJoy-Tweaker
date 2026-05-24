@@ -3,13 +3,11 @@
 #include <string>
 #include <vector>
 
-// =====================================================================
 // RegistryEngine — модуль чтения/записи параметров игровых контроллеров
 // в реестре Windows (HKCU). Структуры данных — зеркало mmddk.h.
 //
 // В этом заголовке только декларации и POD-структуры. Реализация —
 // в RegistryEngine.cpp.
-// =====================================================================
 
 // Запись о джойстике, найденном в реестре.
 struct DeviceEntry {
@@ -106,7 +104,7 @@ struct DeviceData {
 
 namespace RegistryEngine {
 
-    // --- Сканирование и чтение --------------------------------------------
+    // Сканирование и чтение
 
     // Список OEM-ключей физически подключённых устройств (через DirectInput8).
     std::vector<std::wstring> GetConnectedOemKeys();
@@ -117,7 +115,7 @@ namespace RegistryEngine {
     // Чтение OEMName + OEMData для конкретного устройства.
     DeviceData ReadDeviceData(const std::wstring& oemKey);
 
-    // --- Запись -----------------------------------------------------------
+    // Запись
 
     // Запись изменённых байт OEMData (REG_BINARY) в HKCU.
     LSTATUS WriteDeviceData(const std::wstring& oemKey,

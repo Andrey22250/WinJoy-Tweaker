@@ -1,6 +1,5 @@
 #pragma once
 
-// =====================================================================
 // Localization — менеджер строк интерфейса (managed-класс).
 //
 // Загружает строки из embedded resource (.resources) в зависимости от
@@ -13,7 +12,6 @@
 //
 // Предпочтение пользователя (Auto / Russian / English) сохраняется в
 // %APPDATA%\WinJoyTweaker\settings.ini в виде «language=auto|ru|en».
-// =====================================================================
 
 namespace WinJoytweaker {
 

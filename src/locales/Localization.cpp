@@ -122,9 +122,7 @@ String^ Localization::T(String^ key, ... array<Object^>^ args)
     return String::Format(T(key), args);
 }
 
-// =====================================================================
 // Хранение предпочтения языка
-// =====================================================================
 
 String^ Localization::GetSettingsPath()
 {

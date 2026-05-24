@@ -91,9 +91,7 @@ static void RotateBackups(const std::wstring& dir, const std::wstring& safeKey)
         DeleteFileW(files[i].second.c_str());
 }
 
-// =====================================================================
 // Хелперы записи .reg-файла
-// =====================================================================
 
 // Экранирование строкового значения REG_SZ (\ и " → \\ и \").
 static std::wstring EscapeRegString(const std::wstring& s)
@@ -254,9 +252,7 @@ static void DumpSubtreeRec(RegFileWriter& fw, HKEY hKey,
     }
 }
 
-// =====================================================================
 // Основной API
-// =====================================================================
 
 std::wstring WriteBackup(const std::wstring& oemKey,
                          const std::wstring& outDir)
@@ -318,9 +314,7 @@ std::wstring WriteBackup(const std::wstring& oemKey,
     return filePath;
 }
 
-// =====================================================================
 // Разбор .reg-файла
-// =====================================================================
 
 // Парсит REG_SZ-значение начиная с позиции после открывающей кавычки.
 // Возвращает строку до закрывающей " и сдвигает p за неё.
@@ -423,9 +417,9 @@ BackupParseResult ParseBackupFile(const std::wstring& filePath)
 
     // Проходим по файлу построчно, помня текущий контекст:
     // currentScope = "root"   — мы внутри [...\<oemKey>]
-    //                "axis_N" — внутри [...\<oemKey>\Axes\N]
-    //                "btn_N"  — внутри [...\<oemKey>\Buttons\N]
-    //                ""       — посторонний ключ, игнорируем.
+    // "axis_N" — внутри [...\<oemKey>\Axes\N]
+    // "btn_N"  — внутри [...\<oemKey>\Buttons\N]
+    // ""       — посторонний ключ, игнорируем.
     enum class Scope { Other, Root, Axis, Button };
     Scope scope = Scope::Other;
     int   scopeIndex = 0;

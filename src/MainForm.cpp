@@ -66,9 +66,7 @@ static std::wstring SanitizeName(const std::wstring& in)
     return out;
 }
 
-// -----------------------------------------------------------------------
 // Managed-обёртка над DeviceEntry для отображения в ComboBox
-// -----------------------------------------------------------------------
 ref struct DeviceInfo {
     String^ DisplayName;
     String^ RegistryKey;
@@ -98,12 +96,10 @@ static void StyleFlatButton(System::Windows::Forms::Button^ b,
     b->FlatAppearance->MouseDownBackColor = press;
 }
 
-// -----------------------------------------------------------------------
 // Подмена стандартного tabMain на FlatTabControl.
 // InitializeComponent создаёт обычный TabControl (чтобы дизайнер открывался);
 // здесь мы переносим в FlatTabControl все вкладки и ключевые свойства и
 // ставим его на место исходного в дереве контролов.
-// -----------------------------------------------------------------------
 void MainForm::SwapTabControlToFlat()
 {
     if (tabMain == nullptr) return;
@@ -142,12 +138,10 @@ void MainForm::SwapTabControlToFlat()
     comboBoxLanguage->BringToFront();
 }
 
-// -----------------------------------------------------------------------
 // Поля сырых байт (textBoxRawData) и предпросмотра (textBoxPreviewData) —
 // только для чтения и копирования. Они уже ReadOnly (печатать нельзя), но
 // в них ставится мигающая каретка ввода. Здесь убираем каретку и I-beam,
 // исключаем из Tab-обхода и вешаем контекстное меню «Копировать / Выделить всё».
-// -----------------------------------------------------------------------
 void MainForm::SetupReadOnlyDataFields()
 {
     array<TextBox^>^ fields = gcnew array<TextBox^> { textBoxRawData, textBoxPreviewData };
@@ -222,9 +216,7 @@ void MainForm::dataFieldSelectAll_Click(System::Object^ sender, System::EventArg
     tb->SelectAll();
 }
 
-// -----------------------------------------------------------------------
 // Тёмная тема
-// -----------------------------------------------------------------------
 void MainForm::ApplyDarkTheme()
 {
     Color bgDark  = Color::FromArgb(30,  30,  30);
@@ -312,7 +304,7 @@ void MainForm::ApplyDarkTheme()
     comboBoxLanguage->BackColor = bgPanel;
     comboBoxLanguage->ForeColor = textOn;
 
-    // ── Вкладки и редактор имён осей/кнопок ──────────────────────────────
+    // Вкладки и редактор имён осей/кнопок
     tabMain->BackColor       = bgDark;
     tabPageOem->BackColor    = bgDark;
     tabPageAxes->BackColor   = bgDark;
@@ -359,10 +351,8 @@ void MainForm::ApplyDarkTheme()
     }
 }
 
-// -----------------------------------------------------------------------
 // Применение локализованных текстов ко всем UI-элементам.
 // Вызывается в конструкторе и после переключения языка.
-// -----------------------------------------------------------------------
 void MainForm::ApplyLocalization()
 {
     this->Text = Localization::T(L"form.title");
@@ -454,9 +444,7 @@ void MainForm::comboBoxLanguage_SelectedIndexChanged(System::Object^ sender, Sys
     RefreshDeviceList();
 }
 
-// -----------------------------------------------------------------------
 // Сканирование реестра и заполнение ComboBox
-// -----------------------------------------------------------------------
 void MainForm::RefreshDeviceList()
 {
     comboBoxDevice->BeginUpdate();
@@ -522,12 +510,10 @@ void MainForm::checkOnlyConnected_CheckedChanged(System::Object^ sender, System:
     RefreshDeviceList();
 }
 
-// -----------------------------------------------------------------------
 // Вывод сообщения в строку статуса с цветовой индикацией:
-//   Success — зелёный (успешная операция, информация),
-//   Error   — красный (ошибка, нет устройств, нечего записывать),
-//   Neutral — серый (нейтральное состояние).
-// -----------------------------------------------------------------------
+// Success — зелёный (успешная операция, информация),
+// Error   — красный (ошибка, нет устройств, нечего записывать),
+// Neutral — серый (нейтральное состояние).
 void MainForm::SetStatus(System::String^ text, int kind)
 {
     labelStatus->Text = text;
@@ -544,11 +530,9 @@ void MainForm::SetStatus(System::String^ text, int kind)
     }
 }
 
-// -----------------------------------------------------------------------
 // Блокировка элементов редактирования, когда нет устройств для настройки.
 // Кнопки «Обновить», «Папка бэкапов», выбор языка и сам список устройств
 // остаются активными.
-// -----------------------------------------------------------------------
 void MainForm::SetControlsEnabled(bool enabled)
 {
     textBoxOemName->Enabled      = enabled;
@@ -563,9 +547,7 @@ void MainForm::SetControlsEnabled(bool enabled)
     dataGridButtons->Enabled     = enabled;
 }
 
-// -----------------------------------------------------------------------
 // Очистка контролов настройки (когда нет выбранного устройства)
-// -----------------------------------------------------------------------
 void MainForm::ClearFlagControls()
 {
     textBoxDwNumButtons->Text = String::Empty;
@@ -606,9 +588,7 @@ void MainForm::ClearFlagControls()
     dataGridButtons->Rows->Clear();
 }
 
-// -----------------------------------------------------------------------
 // Загрузка и отображение данных выбранного устройства
-// -----------------------------------------------------------------------
 void MainForm::LoadDeviceData()
 {
     DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
@@ -662,7 +642,7 @@ void MainForm::LoadDeviceData()
         textBoxRawData->Text = String::Empty;
     }
 
-    // ── Парсинг dwFlags для UI-контролов ─────────────────────────────────
+    // Парсинг dwFlags для UI-контролов
     // Если данных меньше 4 байт — отключаем блок настроек: нечего показывать.
     if (!data.hasOemData || data.oemDataRaw.size() < sizeof(DWORD)) {
         radioGeneric->Checked = false;
@@ -722,10 +702,8 @@ void MainForm::LoadDeviceData()
     PopulateNamesGrids(data);
 }
 
-// -----------------------------------------------------------------------
 // Пересчёт предпросмотра байт OEMData по текущему состоянию UI.
 // Патчит только первые 4 байта (dwFlags) — остальные байты не трогает.
-// -----------------------------------------------------------------------
 void MainForm::UpdatePreviewData()
 {
     if (_oemDataSnapshot == nullptr || _oemDataSnapshot->Length < 4) {
@@ -828,12 +806,10 @@ void MainForm::comboBoxDevice_SelectedIndexChanged(System::Object^ sender, Syste
     LoadDeviceData();
 }
 
-// -----------------------------------------------------------------------
 // Создание стоковых OEMName/OEMData для «пустого» устройства.
 // У части рулей (например, Ardor) эти параметры отсутствуют в реестре из
 // коробки, и без них блок настроек недоступен. По согласию пользователя
 // записываем дефолтную конфигурацию, которую дальше можно отредактировать.
-// -----------------------------------------------------------------------
 bool MainForm::OfferCreateStockData()
 {
     // Подавляем во время программного обновления списка (см. _refreshing).
@@ -870,8 +846,8 @@ bool MainForm::OfferCreateStockData()
     }
 
     // Стоковый OEMData (8 байт, как у современных HID):
-    //   dwFlags = HASZ | HASPOV | HASR | HASU | HASV = 0x01880003 (обычный джойстик)
-    //   dwNumButtons = 32
+    // dwFlags = HASZ | HASPOV | HASR | HASU | HASV = 0x01880003 (обычный джойстик)
+    // dwNumButtons = 32
     DWORD dwFlags = JoyHws::HASZ | JoyHws::HASPOV
                   | JoyHws::HASR | JoyHws::HASU | JoyHws::HASV;
     DWORD dwNumButtons = 32;
@@ -915,9 +891,7 @@ void MainForm::refreshDebounceTimer_Tick(System::Object^ sender, System::EventAr
     RefreshDeviceList();
 }
 
-// -----------------------------------------------------------------------
 // Валидация ввода: только цифры, итоговое значение 0-64
-// -----------------------------------------------------------------------
 void MainForm::textBoxDwNumButtons_KeyPress(System::Object^ sender, System::Windows::Forms::KeyPressEventArgs^ e)
 {
     if (e->KeyChar == '\b') return;
@@ -962,13 +936,9 @@ void MainForm::nameCell_KeyPress(System::Object^ sender, System::Windows::Forms:
     if (!IsAllowedNameChar(e->KeyChar)) e->Handled = true;
 }
 
-// -----------------------------------------------------------------------
 // Вспомогательная функция: возвращает registryKey выбранного устройства
 // или пустую строку, если ничего не выбрано.
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
 // Кнопка «Сделать бэкап» — явный бэкап текущего состояния реестра
-// -----------------------------------------------------------------------
 void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
@@ -997,9 +967,7 @@ void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
     SetStatus(Localization::T(L"status.backupSaved", gcnew String(backupPath.c_str())), StatusSuccess);
 }
 
-// -----------------------------------------------------------------------
 // Кнопка «Применить» — автобэкап, затем запись изменений в реестр
-// -----------------------------------------------------------------------
 void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
@@ -1086,10 +1054,7 @@ void MainForm::buttonApply_Click(System::Object^ sender, System::EventArgs^ e)
     SetStatus(Localization::T(L"status.applied", gcnew String(backupPath.c_str())), StatusSuccess);
 }
 
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
 // Кнопка «Папка бэкапов» — открывает папку в Проводнике
-// -----------------------------------------------------------------------
 void MainForm::buttonOpenBackups_Click(System::Object^ sender, System::EventArgs^ e)
 {
     std::wstring dir = BackupManager::EnsureBackupDir();
@@ -1103,10 +1068,8 @@ void MainForm::buttonOpenBackups_Click(System::Object^ sender, System::EventArgs
         SetStatus(Localization::T(L"status.openBackupsFailed"), StatusError);
 }
 
-// -----------------------------------------------------------------------
 // Кнопка «Восстановить» — выбор .reg-бэкапа и запись его в реестр.
 // Перед записью делается автобэкап текущего состояния.
-// -----------------------------------------------------------------------
 void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
@@ -1224,9 +1187,7 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
     SetStatus(Localization::T(L"restore.success", dlg->SafeFileName), StatusSuccess);
 }
 
-// -----------------------------------------------------------------------
 // Вкладка «Оси и кнопки» — заполнение сеток из DeviceData
-// -----------------------------------------------------------------------
 void MainForm::PopulateNamesGrids(const DeviceData& data)
 {
     dataGridAxes->Rows->Clear();
@@ -1322,9 +1283,7 @@ static std::vector<NamedEntry> ReadGridEntries(System::Windows::Forms::DataGridV
     return out;
 }
 
-// -----------------------------------------------------------------------
 // Кнопка «Перечитать» — обновить сетки из реестра без изменений UI основной вкладки
-// -----------------------------------------------------------------------
 void MainForm::buttonReloadNames_Click(System::Object^ sender, System::EventArgs^ e)
 {
     // Полная перезагрузка устройства проще и безопаснее: гарантирует, что
@@ -1332,9 +1291,7 @@ void MainForm::buttonReloadNames_Click(System::Object^ sender, System::EventArgs
     LoadDeviceData();
 }
 
-// -----------------------------------------------------------------------
 // Кнопка «Применить имена» — автобэкап + запись Axes\<N>\@ и Buttons\<N>\@
-// -----------------------------------------------------------------------
 void MainForm::buttonApplyNames_Click(System::Object^ sender, System::EventArgs^ e)
 {
     DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
@@ -1389,9 +1346,7 @@ void MainForm::buttonApplyNames_Click(System::Object^ sender, System::EventArgs^
     SetStatus(Localization::T(L"status.namesApplied", written), StatusSuccess);
 }
 
-// -----------------------------------------------------------------------
 // Точка входа
-// -----------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
     Application::EnableVisualStyles();

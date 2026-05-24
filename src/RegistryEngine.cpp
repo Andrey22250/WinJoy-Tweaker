@@ -17,9 +17,7 @@ namespace {
 
 namespace RegistryEngine {
 
-// =====================================================================
 // Сканирование и чтение
-// =====================================================================
 
 // Возвращает имена OEM-подразделов (например, "VID_046D&PID_C29B"),
 // соответствующих физически подключённым в данный момент устройствам.
@@ -135,7 +133,7 @@ DeviceData ReadDeviceData(const std::wstring& oemKey)
         return result;
     }
 
-    // --- OEMName (REG_SZ) ---
+    // OEMName (REG_SZ)
     WCHAR name[256] = {};
     DWORD nameLen = sizeof(name), valType = 0;
     if (RegQueryValueExW(hKey, L"OEMName", nullptr, &valType,
@@ -145,7 +143,7 @@ DeviceData ReadDeviceData(const std::wstring& oemKey)
         result.oemName = name;
     }
 
-    // --- OEMData (REG_BINARY): двухэтапное чтение ---
+    // OEMData (REG_BINARY): двухэтапное чтение
     DWORD dataSize = 0;
     st = RegQueryValueExW(hKey, L"OEMData", nullptr, &valType, nullptr, &dataSize);
     if (st == ERROR_SUCCESS && valType == REG_BINARY && dataSize > 0) {
@@ -164,7 +162,7 @@ DeviceData ReadDeviceData(const std::wstring& oemKey)
         }
     }
 
-    // --- Подразделы Axes\<N> и Buttons\<N> (опциональны) ---
+    // Подразделы Axes\<N> и Buttons\<N> (опциональны)
     auto readNamedSubkeys = [&](const wchar_t* container,
                                 std::vector<NamedEntry>& out)
     {
@@ -224,9 +222,7 @@ DeviceData ReadDeviceData(const std::wstring& oemKey)
     return result;
 }
 
-// =====================================================================
 // Запись в реестр
-// =====================================================================
 
 LSTATUS WriteDeviceData(const std::wstring& oemKey,
                         const std::vector<BYTE>& rawBytes)
