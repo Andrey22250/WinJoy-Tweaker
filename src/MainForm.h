@@ -372,7 +372,7 @@ namespace WinJoytweaker {
             this->rootLayout->Padding = System::Windows::Forms::Padding(19, 5, 19, 20);
             this->rootLayout->RowCount = 11;
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
-            this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 25)));
+            this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle(System::Windows::Forms::SizeType::Absolute, 26)));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
             this->rootLayout->RowStyles->Add((gcnew System::Windows::Forms::RowStyle()));
@@ -414,22 +414,22 @@ namespace WinJoytweaker {
             this->rootLayout->SetColumnSpan(this->comboBoxDevice, 2);
             this->comboBoxDevice->Dock = System::Windows::Forms::DockStyle::Fill;
             this->comboBoxDevice->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
-            this->comboBoxDevice->ItemHeight = 17;
+            this->comboBoxDevice->ItemHeight = 18;
             this->comboBoxDevice->Location = System::Drawing::Point(19, 33);
             this->comboBoxDevice->Margin = System::Windows::Forms::Padding(0, 0, 8, 0);
             this->comboBoxDevice->Name = L"comboBoxDevice";
-            this->comboBoxDevice->Size = System::Drawing::Size(646, 25);
+            this->comboBoxDevice->Size = System::Drawing::Size(640, 26);
             this->comboBoxDevice->TabIndex = 1;
             this->comboBoxDevice->SelectedIndexChanged += gcnew System::EventHandler(this, &MainForm::comboBoxDevice_SelectedIndexChanged);
             // 
             // buttonRefresh
             // 
-            this->buttonRefresh->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Left) | System::Windows::Forms::AnchorStyles::Right));
-            this->buttonRefresh->Location = System::Drawing::Point(673, 33);
+            this->buttonRefresh->Anchor = static_cast<System::Windows::Forms::AnchorStyles>(((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Left)
+                | System::Windows::Forms::AnchorStyles::Right));
+            this->buttonRefresh->Location = System::Drawing::Point(667, 33);
             this->buttonRefresh->Margin = System::Windows::Forms::Padding(0);
-            this->buttonRefresh->MinimumSize = System::Drawing::Size(0, 0);
             this->buttonRefresh->Name = L"buttonRefresh";
-            this->buttonRefresh->Size = System::Drawing::Size(170, 23);
+            this->buttonRefresh->Size = System::Drawing::Size(170, 26);
             this->buttonRefresh->TabIndex = 2;
             this->buttonRefresh->Text = L"Обновить";
             this->buttonRefresh->Click += gcnew System::EventHandler(this, &MainForm::buttonRefresh_Click);
@@ -1008,7 +1008,7 @@ namespace WinJoytweaker {
             this->comboBoxLanguage->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
             this->comboBoxLanguage->Location = System::Drawing::Point(697, 6);
             this->comboBoxLanguage->Name = L"comboBoxLanguage";
-            this->comboBoxLanguage->Size = System::Drawing::Size(150, 25);
+            this->comboBoxLanguage->Size = System::Drawing::Size(150, 26);
             this->comboBoxLanguage->TabIndex = 30;
             // 
             // tabMain
