@@ -496,12 +496,18 @@ void MainForm::RefreshDeviceList()
     // Иначе для единственного пустого устройства, которое выбирается программно
     // (SelectedIndex=0), диалог подавлялся бы вместе с программным выбором —
     // и пользователь так и не получал бы предложение создать параметры.
-    if (OfferCreateStockData())
+    // Авто-путь (в т.ч. WM_DEVICECHANGE) — respectDecline=true, чтобы модалка не
+    // выскакивала повторно при каждом обновлении после отказа пользователя.
+    if (OfferCreateStockData(true))
         LoadDeviceData();
 }
 
 void MainForm::buttonRefresh_Click(System::Object^ sender, System::EventArgs^ e)
 {
+    // Ручное «Обновить» — явное действие пользователя: сбрасываем запомненные
+    // отказы от создания параметров, чтобы для пустого устройства (в т.ч.
+    // единственного, которое нельзя «перевыбрать») модалка предложилась снова.
+    _declinedCreate->Clear();
     RefreshDeviceList();
 }
 
@@ -551,13 +557,13 @@ void MainForm::SetControlsEnabled(bool enabled)
     dataGridButtons->Enabled     = enabled;
 }
 
-// Показ/скрытие блока редактирования при отсутствии устройств. В отличие от
-// SetControlsEnabled (делает элементы тёмными/неактивными — пользователи не
-// понимали, почему) полностью убирает редактируемые поля и пустые вкладки,
-// оставляя только строку выбора устройства и строку статуса.
-void MainForm::SetEditorVisible(bool visible)
+// Показ/скрытие ТОЛЬКО блока редактирования OEMData (подписи, OEMName, число
+// кнопок, флаги, сырые/превью байты). Кнопки/статус/вкладки не трогает.
+// Используется и при отсутствии устройств (через SetEditorVisible), и для
+// устройства без OEMData (параметры скрыты, но бэкап/восстановление доступны —
+// раньше тут было серое неактивное меню, которое путало пользователей).
+void MainForm::SetOemParamsVisible(bool visible)
 {
-    // Блок редактирования OEMData (первая вкладка)
     labelOemNameCaption->Visible = visible;
     textBoxOemName->Visible      = visible;
     labelOemDataCaption->Visible = visible;
@@ -567,17 +573,29 @@ void MainForm::SetEditorVisible(bool visible)
     textBoxRawData->Visible      = visible;
     labelPreviewData->Visible    = visible;
     textBoxPreviewData->Visible  = visible;
-    panelButtons->Visible        = visible;
 
     // Auto-строки rootLayout (подписи, поля, rowNumButtons) схлопываются сами по
-    // Visible дочерних контролов. Absolute-строки groupBoxFlags и panelButtons —
-    // нет, поэтому их высоту восстанавливаем вручную (иначе остаются пустые
-    // промежутки). ВАЖНО: значения масштабируем по текущему DPI — иначе при 150%
-    // мы бы затёрли отмасштабированную фреймворком высоту (562) обратно на 375,
-    // и группа осталась бы «как на 100%», переполняясь содержимым.
+    // Visible дочерних контролов. Absolute-строка groupBoxFlags — нет, поэтому её
+    // высоту восстанавливаем вручную. ВАЖНО: масштабируем по текущему DPI — иначе
+    // при 150% затёрли бы отмасштабированную фреймворком высоту (562) на 375, и
+    // группа осталась бы «как на 100%», переполняясь содержимым.
     const float dpiScale = (float)this->DeviceDpi / 96.0f;
-    rootLayout->RowStyles[6]->Height  = visible ? 375.0f * dpiScale : 0.0f;  // groupBoxFlags
-    rootLayout->RowStyles[10]->Height = visible ? 76.0f  * dpiScale : 0.0f;  // panelButtons
+    rootLayout->RowStyles[6]->Height = visible ? 375.0f * dpiScale : 0.0f;  // groupBoxFlags
+}
+
+// Показ/скрытие всего блока редактирования при отсутствии устройств. В отличие
+// от SetControlsEnabled (делал элементы тёмными/неактивными — пользователи не
+// понимали, почему) полностью убирает редактируемые поля, кнопки и пустые
+// вкладки, оставляя только строку выбора устройства и строку статуса.
+void MainForm::SetEditorVisible(bool visible)
+{
+    SetOemParamsVisible(visible);
+    panelButtons->Visible = visible;
+
+    // panelButtons — Absolute-строка, её высоту тоже зануляем при скрытии
+    // (с DPI-множителем, см. комментарий в SetOemParamsVisible).
+    const float dpiScale = (float)this->DeviceDpi / 96.0f;
+    rootLayout->RowStyles[10]->Height = visible ? 76.0f * dpiScale : 0.0f;  // panelButtons
 
     // Вкладки «Оси и кнопки» и «Информация» без устройства пусты — убираем их
     // из TabControl целиком (Add дописывает в хвост, сохраняя порядок).
@@ -704,7 +722,10 @@ void MainForm::LoadDeviceData()
     }
 
     // Парсинг dwFlags для UI-контролов
-    // Если данных меньше 4 байт — отключаем блок настроек: нечего показывать.
+    // Если OEMData нет (или меньше 4 байт) — СКРЫВАЕМ блок параметров целиком
+    // (раньше он оставался серым/неактивным и путал). Кнопки (в т.ч. «Сделать
+    // бэкап») и вкладки остаются — пустое устройство можно забэкапить, а создать
+    // параметры предлагает OfferCreateStockData при (пере)выборе устройства.
     if (!data.hasOemData || data.oemDataRaw.size() < sizeof(DWORD)) {
         radioGeneric->Checked = false;
         radioYoke->Checked    = false;
@@ -714,9 +735,13 @@ void MainForm::LoadDeviceData()
         checkHasR->Checked    = false;
         checkHasU->Checked    = false;
         checkHasV->Checked    = false;
-        groupBoxFlags->Enabled = false;
+        SetOemParamsVisible(false);
         return;
     }
+
+    // Данные есть — блок параметров показываем (мог быть скрыт предыдущим пустым
+    // устройством) и включаем.
+    SetOemParamsVisible(true);
 
     DWORD dwFlags = 0;
     CopyMemory(&dwFlags, data.oemDataRaw.data(), sizeof(DWORD));
@@ -863,7 +888,7 @@ void MainForm::comboBoxDevice_SelectedIndexChanged(System::Object^ sender, Syste
     // устройства пользователем — не внутри LoadDeviceData, который вызывается
     // также при авто-обновлении по WM_DEVICECHANGE (иначе модальное окно
     // выскакивало бы само при подключении/отключении устройств).
-    OfferCreateStockData();
+    OfferCreateStockData(false);  // явный выбор — предлагать всегда
     LoadDeviceData();
 }
 
@@ -871,7 +896,7 @@ void MainForm::comboBoxDevice_SelectedIndexChanged(System::Object^ sender, Syste
 // У части рулей (например, Ardor) эти параметры отсутствуют в реестре из
 // коробки, и без них блок настроек недоступен. По согласию пользователя
 // записываем дефолтную конфигурацию, которую дальше можно отредактировать.
-bool MainForm::OfferCreateStockData()
+bool MainForm::OfferCreateStockData(bool respectDecline)
 {
     // Подавляем во время программного обновления списка (см. _refreshing).
     if (_refreshing) return false;
@@ -879,8 +904,11 @@ bool MainForm::OfferCreateStockData()
     DeviceInfo^ sel = GetSelectedDevice(comboBoxDevice);
     if (sel == nullptr) return false;
 
-    // Не предлагаем повторно тем устройствам, по которым уже был отказ в сессии.
-    if (_declinedCreate->Contains(sel->RegistryKey)) return false;
+    // respectDecline=true (авто-путь: обновление списка/WM_DEVICECHANGE) — не
+    // спамим модалкой, если по устройству уже был отказ в сессии. false (явный
+    // выбор устройства/восстановление) — предлагаем всегда, отказ не блокирует:
+    // пользователь может сначала сделать бэкап, потом перевыбрать и создать.
+    if (respectDecline && _declinedCreate->Contains(sel->RegistryKey)) return false;
 
     msclr::interop::marshal_context ctx;
     std::wstring oemKey = ctx.marshal_as<std::wstring>(sel->RegistryKey);
@@ -1011,14 +1039,10 @@ void MainForm::buttonBackup_Click(System::Object^ sender, System::EventArgs^ e)
         return;
     }
 
-    DeviceData data = RegistryEngine::ReadDeviceData(oemKey);
-    if (!data.hasOemData) {
-        SetStatus(Localization::T(L"status.oemDataMissingBackup"), StatusError);
-        return;
-    }
-
-    // WriteBackup сам читает свежее поддерево HKCU\...\OEM\<oemKey> из
-    // реестра — кэшированные data.oemName/data.oemDataRaw уже не нужны.
+    // Бэкап разрешён даже без OEMData: устройство есть в реестре как ключ, и
+    // WriteBackup рекурсивно сохранит его поддерево (Axes/Buttons и т.п.), а
+    // «пустой» бэкап — валидная точка отката к заводскому состоянию (как раз
+    // нужна, чтобы сделать снимок ДО создания стоковых параметров).
     std::wstring backupPath = BackupManager::WriteBackup(oemKey);
     if (backupPath.empty()) {
         SetStatus(Localization::T(L"status.backupFailed"), StatusError);
@@ -1244,6 +1268,14 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
     for (const auto& b : parsed.buttons)
         RegistryEngine::WriteButtonName(oemKey, b.index, b.name);
 
+    // Восстановление «пустого» бэкапа удаляет OEMData → устройство остаётся без
+    // параметров, и LoadDeviceData выключает блок настроек (ветка «нет данных»).
+    // Чтобы UI не «завис» заблокированным (требуя ручного «Обновить»), повторяем
+    // тот же путь, что и при выборе устройства: предлагаем пересоздать стоковые
+    // параметры, затем перечитываем. При обычном (непустом) восстановлении
+    // OfferCreateStockData ничего не предлагает (данные уже есть), а LoadDeviceData
+    // штатно включает блок.
+    OfferCreateStockData(false);  // явное действие — предлагать всегда
     LoadDeviceData();
     SetStatus(Localization::T(L"restore.success", dlg->SafeFileName), StatusSuccess);
 }

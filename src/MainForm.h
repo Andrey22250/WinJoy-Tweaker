@@ -213,7 +213,10 @@ namespace WinJoytweaker {
         void LoadDeviceData();
         // Если у выбранного устройства нет OEMData, предлагает создать стоковые
         // параметры. Возвращает true, если что-то было записано.
-        bool OfferCreateStockData();
+        // respectDecline=true: не предлагать, если по устройству уже был отказ в
+        // сессии (для авто-обновления — чтобы не спамить). false: предлагать
+        // всегда (явный выбор устройства/восстановление — отказ не запоминается).
+        bool OfferCreateStockData(bool respectDecline);
         void ClearFlagControls();
 
         // kind: 0 = нейтральный (серый), 1 = успех (зелёный), 2 = ошибка (красный).
@@ -225,6 +228,11 @@ namespace WinJoytweaker {
         // «Информация» (нет устройств → false: остаётся только строка выбора
         // устройства и статус).
         void SetEditorVisible(bool visible);
+        // Показ/скрытие только блока редактирования OEMData (подписи, OEMName,
+        // число кнопок, флаги, сырые/превью байты). Кнопки, статус и вкладки НЕ
+        // трогает — для устройства без OEMData: параметры скрыты, но бэкап/
+        // восстановление доступны.
+        void SetOemParamsVisible(bool visible);
         void UpdatePreviewData();
         void flagsControl_Changed(System::Object^ sender, System::EventArgs^ e);
         void checkHasPov_CheckedChanged(System::Object^ sender, System::EventArgs^ e);
