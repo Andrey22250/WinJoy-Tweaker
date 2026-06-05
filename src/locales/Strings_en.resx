@@ -237,6 +237,14 @@
   <data name="status.noDevices" xml:space="preserve">
     <value>No connected controllers detected.</value>
   </data>
+  <data name="dialog.noDevicesTitle" xml:space="preserve">
+    <value>No devices found</value>
+  </data>
+  <data name="dialog.noDevicesBody" xml:space="preserve">
+    <value>No game controllers were detected.
+
+Connect a wheel or joystick and click "Refresh". If a device is connected but not listed, clear the "Only connected" checkbox.</value>
+  </data>
   <data name="status.scanError" xml:space="preserve">
     <value>Scan error: {0}</value>
   </data>

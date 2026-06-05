@@ -237,6 +237,14 @@
   <data name="status.noDevices" xml:space="preserve">
     <value>Подключённые контроллеры не обнаружены.</value>
   </data>
+  <data name="dialog.noDevicesTitle" xml:space="preserve">
+    <value>Устройства не найдены</value>
+  </data>
+  <data name="dialog.noDevicesBody" xml:space="preserve">
+    <value>Игровые контроллеры не обнаружены.
+
+Подключите руль или джойстик и нажмите «Обновить». Если устройство подключено, но не отображается, снимите галочку «Только подключённые».</value>
+  </data>
   <data name="status.scanError" xml:space="preserve">
     <value>Ошибка сканирования: {0}</value>
   </data>

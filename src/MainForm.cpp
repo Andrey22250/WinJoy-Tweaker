@@ -461,6 +461,7 @@ void MainForm::RefreshDeviceList()
         }
 
         if (!devices.empty()) {
+            SetEditorVisible(true);
             SetControlsEnabled(true);
             comboBoxDevice->SelectedIndex = 0;
             // LoadDeviceData() вызовется автоматически через SelectedIndexChanged
@@ -470,16 +471,19 @@ void MainForm::RefreshDeviceList()
         } else {
             textBoxOemName->Text = String::Empty;
             ClearFlagControls();
-            SetControlsEnabled(false);
+            // Нет устройств — прячем блок редактирования и вкладки целиком,
+            // чтобы тёмные неактивные поля не сбивали с толку: остаётся только
+            // строка выбора устройства и заметный статус.
+            SetEditorVisible(false);
             SetStatus(Localization::T(L"status.noDevices"), StatusError);
         }
     }
     catch (System::Exception^ ex) {
-        SetControlsEnabled(false);
+        SetEditorVisible(false);
         SetStatus(Localization::T(L"status.scanError", ex->Message), StatusError);
     }
     catch (...) {
-        SetControlsEnabled(false);
+        SetEditorVisible(false);
         SetStatus(Localization::T(L"status.scanInternalError"), StatusError);
     }
     finally {
@@ -522,7 +526,7 @@ void MainForm::SetStatus(System::String^ text, int kind)
         labelStatus->ForeColor = System::Drawing::Color::FromArgb(80, 200, 120);
         break;
     case StatusError:
-        labelStatus->ForeColor = System::Drawing::Color::FromArgb(235, 95, 95);
+        labelStatus->ForeColor = System::Drawing::Color::FromArgb(225, 0, 0);
         break;
     default:
         labelStatus->ForeColor = System::Drawing::Color::FromArgb(160, 160, 160);
@@ -545,6 +549,63 @@ void MainForm::SetControlsEnabled(bool enabled)
     buttonReloadNames->Enabled   = enabled;
     dataGridAxes->Enabled        = enabled;
     dataGridButtons->Enabled     = enabled;
+}
+
+// Показ/скрытие блока редактирования при отсутствии устройств. В отличие от
+// SetControlsEnabled (делает элементы тёмными/неактивными — пользователи не
+// понимали, почему) полностью убирает редактируемые поля и пустые вкладки,
+// оставляя только строку выбора устройства и строку статуса.
+void MainForm::SetEditorVisible(bool visible)
+{
+    // Блок редактирования OEMData (первая вкладка)
+    labelOemNameCaption->Visible = visible;
+    textBoxOemName->Visible      = visible;
+    labelOemDataCaption->Visible = visible;
+    rowNumButtons->Visible       = visible;
+    groupBoxFlags->Visible       = visible;
+    labelRawData->Visible        = visible;
+    textBoxRawData->Visible      = visible;
+    labelPreviewData->Visible    = visible;
+    textBoxPreviewData->Visible  = visible;
+    panelButtons->Visible        = visible;
+
+    // Auto-строки rootLayout (подписи, поля, rowNumButtons) схлопываются сами по
+    // Visible дочерних контролов. Absolute-строки groupBoxFlags и panelButtons —
+    // нет, поэтому их высоту восстанавливаем вручную (иначе остаются пустые
+    // промежутки). ВАЖНО: значения масштабируем по текущему DPI — иначе при 150%
+    // мы бы затёрли отмасштабированную фреймворком высоту (562) обратно на 375,
+    // и группа осталась бы «как на 100%», переполняясь содержимым.
+    const float dpiScale = (float)this->DeviceDpi / 96.0f;
+    rootLayout->RowStyles[6]->Height  = visible ? 375.0f * dpiScale : 0.0f;  // groupBoxFlags
+    rootLayout->RowStyles[10]->Height = visible ? 76.0f  * dpiScale : 0.0f;  // panelButtons
+
+    // Вкладки «Оси и кнопки» и «Информация» без устройства пусты — убираем их
+    // из TabControl целиком (Add дописывает в хвост, сохраняя порядок).
+    if (visible) {
+        if (!tabMain->TabPages->Contains(tabPageAxes)) tabMain->TabPages->Add(tabPageAxes);
+        if (!tabMain->TabPages->Contains(tabPageInfo)) tabMain->TabPages->Add(tabPageInfo);
+    } else {
+        tabMain->TabPages->Remove(tabPageAxes);
+        tabMain->TabPages->Remove(tabPageInfo);
+    }
+}
+
+// Однократное модальное уведомление об отсутствии устройств — после появления
+// окна. Первый скан уже отработал в конструкторе, поэтому пустой список здесь
+// означает, что устройств не нашлось при запуске.
+void MainForm::OnShown(System::EventArgs^ e)
+{
+    Form::OnShown(e);
+
+    if (_startupNoDevicePrompt) {
+        _startupNoDevicePrompt = false;
+        if (comboBoxDevice->Items->Count == 0) {
+            MessageBox::Show(this,
+                Localization::T(L"dialog.noDevicesBody"),
+                Localization::T(L"dialog.noDevicesTitle"),
+                MessageBoxButtons::OK, MessageBoxIcon::Information);
+        }
+    }
 }
 
 // Очистка контролов настройки (когда нет выбранного устройства)
