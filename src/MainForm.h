@@ -36,6 +36,12 @@ namespace WinJoytweaker {
             // прячем каретку, убираем из Tab-обхода, вешаем контекстное меню.
             SetupReadOnlyDataFields();
 
+            // Подсказки по параметрам держим на экране дольше (тексты пояснений
+            // длиннее дефолтных 5 с) и показываем чуть быстрее.
+            toolTipOemName->AutoPopDelay = 20000;
+            toolTipOemName->InitialDelay = 400;
+            toolTipOemName->ReshowDelay  = 200;
+
             // Заполняем переключатель языка и выставляем сохранённое значение
             // ДО подписки на handler, чтобы инициализация не триггерила его.
             comboBoxLanguage->Items->Add(L"Auto / Авто");

@@ -384,6 +384,57 @@ After creation you can edit and apply them.</value>
   <data name="tooltip.oemName" xml:space="preserve">
     <value>Latin letters and spaces only. Max 128 characters.</value>
   </data>
+  <data name="tooltip.numButtons" xml:space="preserve">
+    <value>Number of device buttons (dwNumButtons), 0–64. Stored in bytes 4–7 of OEMData.</value>
+  </data>
+  <data name="tooltip.deviceType" xml:space="preserve">
+    <value>Device category — type bits in dwFlags. Affects how the system classifies the controller. The three types are mutually exclusive.</value>
+  </data>
+  <data name="tooltip.deviceGeneric" xml:space="preserve">
+    <value>Generic joystick — none of the type bits set.</value>
+  </data>
+  <data name="tooltip.deviceYoke" xml:space="preserve">
+    <value>Yoke (ISYOKE bit) — for flight simulators.</value>
+  </data>
+  <data name="tooltip.deviceGamepad" xml:space="preserve">
+    <value>Gamepad (ISGAMEPAD bit).</value>
+  </data>
+  <data name="tooltip.deviceWheel" xml:space="preserve">
+    <value>Wheel (ISCARCTRL bit) — for racing simulators.</value>
+  </data>
+  <data name="tooltip.axisZ" xml:space="preserve">
+    <value>Z axis present (HASZ bit) — often throttle/brake or a third axis.</value>
+  </data>
+  <data name="tooltip.axisR" xml:space="preserve">
+    <value>4th axis R present (HASR bit) — Rudder.</value>
+  </data>
+  <data name="tooltip.axisU" xml:space="preserve">
+    <value>5th axis U present (HASU bit).</value>
+  </data>
+  <data name="tooltip.axisV" xml:space="preserve">
+    <value>6th axis V present (HASV bit).</value>
+  </data>
+  <data name="tooltip.pov" xml:space="preserve">
+    <value>POV switch (HASPOV bit) — hat / D-Pad.</value>
+  </data>
+  <data name="tooltip.povButtonCombos" xml:space="preserve">
+    <value>POV is defined by a button combination rather than a separate axis.</value>
+  </data>
+  <data name="tooltip.povPoll" xml:space="preserve">
+    <value>POV is polled by the driver rather than read via events.</value>
+  </data>
+  <data name="tooltip.xAxis" xml:space="preserve">
+    <value>X axis source (J1/J2 gameport model). Read mainly by legacy winmm; usually has no effect on modern DirectInput devices.</value>
+  </data>
+  <data name="tooltip.yAxis" xml:space="preserve">
+    <value>Y axis source (J1/J2 gameport model). See the note on the X axis.</value>
+  </data>
+  <data name="tooltip.rawData" xml:space="preserve">
+    <value>Current OEMData bytes in the registry (read-only).</value>
+  </data>
+  <data name="tooltip.previewData" xml:space="preserve">
+    <value>How the OEMData bytes will look after clicking "Apply" (read-only).</value>
+  </data>
   <data name="common.noDataPlaceholder" xml:space="preserve">
     <value>—</value>
   </data>

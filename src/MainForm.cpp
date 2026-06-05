@@ -409,7 +409,34 @@ void MainForm::ApplyLocalization()
     buttonOpenBackups->Text = Localization::T(L"button.openBackups");
     buttonRestore->Text     = Localization::T(L"button.restore");
 
+    // Подсказки по параметрам — по наведению на сам контрол (и подпись, где
+    // уместно). Перевыставляются здесь же при смене языка. Один общий ToolTip.
     toolTipOemName->SetToolTip(textBoxOemName, Localization::T(L"tooltip.oemName"));
+
+    toolTipOemName->SetToolTip(textBoxDwNumButtons, Localization::T(L"tooltip.numButtons"));
+    toolTipOemName->SetToolTip(labelDwNumButtons,   Localization::T(L"tooltip.numButtons"));
+
+    toolTipOemName->SetToolTip(labelDeviceTypeHeader, Localization::T(L"tooltip.deviceType"));
+    toolTipOemName->SetToolTip(radioGeneric, Localization::T(L"tooltip.deviceGeneric"));
+    toolTipOemName->SetToolTip(radioYoke,    Localization::T(L"tooltip.deviceYoke"));
+    toolTipOemName->SetToolTip(radioGamepad, Localization::T(L"tooltip.deviceGamepad"));
+    toolTipOemName->SetToolTip(radioWheel,   Localization::T(L"tooltip.deviceWheel"));
+
+    toolTipOemName->SetToolTip(checkHasZ, Localization::T(L"tooltip.axisZ"));
+    toolTipOemName->SetToolTip(checkHasR, Localization::T(L"tooltip.axisR"));
+    toolTipOemName->SetToolTip(checkHasU, Localization::T(L"tooltip.axisU"));
+    toolTipOemName->SetToolTip(checkHasV, Localization::T(L"tooltip.axisV"));
+    toolTipOemName->SetToolTip(checkHasPov,            Localization::T(L"tooltip.pov"));
+    toolTipOemName->SetToolTip(checkPovIsButtonCombos, Localization::T(L"tooltip.povButtonCombos"));
+    toolTipOemName->SetToolTip(checkPovIsPoll,         Localization::T(L"tooltip.povPoll"));
+
+    toolTipOemName->SetToolTip(labelXAxisHeader, Localization::T(L"tooltip.xAxis"));
+    toolTipOemName->SetToolTip(labelYAxisHeader, Localization::T(L"tooltip.yAxis"));
+
+    toolTipOemName->SetToolTip(textBoxRawData,     Localization::T(L"tooltip.rawData"));
+    toolTipOemName->SetToolTip(labelRawData,       Localization::T(L"tooltip.rawData"));
+    toolTipOemName->SetToolTip(textBoxPreviewData, Localization::T(L"tooltip.previewData"));
+    toolTipOemName->SetToolTip(labelPreviewData,   Localization::T(L"tooltip.previewData"));
 
     // Вкладки
     tabPageOem->Text  = Localization::T(L"tab.oemData");

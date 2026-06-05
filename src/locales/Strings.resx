@@ -384,6 +384,57 @@
   <data name="tooltip.oemName" xml:space="preserve">
     <value>Только латинские буквы и пробелы. Макс. 128 символов.</value>
   </data>
+  <data name="tooltip.numButtons" xml:space="preserve">
+    <value>Число кнопок устройства (dwNumButtons), 0–64. Хранится в байтах 4–7 OEMData.</value>
+  </data>
+  <data name="tooltip.deviceType" xml:space="preserve">
+    <value>Категория устройства — биты типа в dwFlags. Влияет на то, как система классифицирует контроллер. Три типа взаимоисключающие.</value>
+  </data>
+  <data name="tooltip.deviceGeneric" xml:space="preserve">
+    <value>Обычный джойстик — ни один из битов типа не выставлен.</value>
+  </data>
+  <data name="tooltip.deviceYoke" xml:space="preserve">
+    <value>Штурвал (бит ISYOKE) — для авиасимуляторов.</value>
+  </data>
+  <data name="tooltip.deviceGamepad" xml:space="preserve">
+    <value>Геймпад (бит ISGAMEPAD).</value>
+  </data>
+  <data name="tooltip.deviceWheel" xml:space="preserve">
+    <value>Руль (бит ISCARCTRL) — для автосимуляторов.</value>
+  </data>
+  <data name="tooltip.axisZ" xml:space="preserve">
+    <value>Наличие оси Z (бит HASZ) — часто газ/тормоз или третья ось.</value>
+  </data>
+  <data name="tooltip.axisR" xml:space="preserve">
+    <value>Наличие 4-й оси R (бит HASR) — Rudder / руль направления.</value>
+  </data>
+  <data name="tooltip.axisU" xml:space="preserve">
+    <value>Наличие 5-й оси U (бит HASU).</value>
+  </data>
+  <data name="tooltip.axisV" xml:space="preserve">
+    <value>Наличие 6-й оси V (бит HASV).</value>
+  </data>
+  <data name="tooltip.pov" xml:space="preserve">
+    <value>POV-переключатель (бит HASPOV) — крестовина / шляпа / D-Pad.</value>
+  </data>
+  <data name="tooltip.povButtonCombos" xml:space="preserve">
+    <value>POV задаётся комбинацией кнопок, а не отдельной осью.</value>
+  </data>
+  <data name="tooltip.povPoll" xml:space="preserve">
+    <value>POV опрашивается драйвером (poll), а не считывается событиями.</value>
+  </data>
+  <data name="tooltip.xAxis" xml:space="preserve">
+    <value>Источник оси X (модель геймпорта J1/J2). Читается в основном legacy winmm; на современные DirectInput-устройства обычно не влияет.</value>
+  </data>
+  <data name="tooltip.yAxis" xml:space="preserve">
+    <value>Источник оси Y (модель геймпорта J1/J2). См. примечание к оси X.</value>
+  </data>
+  <data name="tooltip.rawData" xml:space="preserve">
+    <value>Текущие байты OEMData в реестре (только чтение).</value>
+  </data>
+  <data name="tooltip.previewData" xml:space="preserve">
+    <value>Как будут выглядеть байты OEMData после нажатия «Применить» (только чтение).</value>
+  </data>
   <data name="common.noDataPlaceholder" xml:space="preserve">
     <value>—</value>
   </data>
