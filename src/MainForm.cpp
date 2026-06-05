@@ -445,6 +445,8 @@ void MainForm::ApplyLocalization()
 
     labelAxesGridHeader->Text    = Localization::T(L"axes.gridHeader");
     labelButtonsGridHeader->Text = Localization::T(L"buttons.gridHeader");
+    if (labelAxesEmpty != nullptr)
+        labelAxesEmpty->Text = Localization::T(L"axes.emptyHint");
 
     buttonReloadNames->Text = Localization::T(L"axes.buttonReload");
     buttonApplyNames->Text  = Localization::T(L"axes.buttonApply");
@@ -763,6 +765,9 @@ void MainForm::LoadDeviceData()
         checkHasU->Checked    = false;
         checkHasV->Checked    = false;
         SetOemParamsVisible(false);
+        // Имена осей/кнопок не зависят от OEMData — вкладку «Оси и кнопки» всё
+        // равно обновляем (иначе показались бы данные предыдущего устройства).
+        PopulateNamesGrids(data);
         return;
     }
 
@@ -1248,22 +1253,39 @@ void MainForm::buttonRestore_Click(System::Object^ sender, System::EventArgs^ e)
         }
     }
 
-    // Уведомление об удалении: какие значения отсутствуют в бэкапе и потому
-    // будут удалены из устройства (откат к «пустому» состоянию).
-    String^ deleteNotice = String::Empty;
-    if (parsed.oemDataRaw.empty())
-        deleteNotice += Localization::T(L"restore.willDeleteData");
-    if (parsed.oemName.empty())
-        deleteNotice += Localization::T(L"restore.willDeleteName");
+    const bool noData = parsed.oemDataRaw.empty();
+    const bool noName = parsed.oemName.empty();
+    const bool emptyBackup = noData && noName;
+
+    // Делаем понятным, что отсутствие значения в бэкапе = его УДАЛЕНИЕ из
+    // устройства (а не «пустое имя»). Полностью пустой бэкап — отдельный явный
+    // заголовок «сброс к заводскому состоянию»; частичный — построчная пометка.
+    String^ header = String::Empty;
+    if (emptyBackup) {
+        header = Localization::T(L"restore.emptyBackupHeader");
+    } else {
+        if (noData) header += Localization::T(L"restore.willDeleteData");
+        if (noName) header += Localization::T(L"restore.willDeleteName");
+    }
+
+    // В строках значений вместо пустоты показываем явную плашку «будет удалено».
+    String^ nameDisp = noName
+        ? Localization::T(L"restore.valueMissing")
+        : gcnew String(parsed.oemName.c_str());
+    String^ hexDisp = noData
+        ? Localization::T(L"restore.valueMissing")
+        : hexBuilder->ToString();
 
     // Подтверждение: восстановление перезапишет/удалит текущие настройки.
-    String^ msg = warning + deleteNotice + Localization::T(L"restore.confirmText",
-        gcnew String(parsed.oemName.c_str()),
-        hexBuilder->ToString());
+    String^ msg = warning + header
+        + Localization::T(L"restore.confirmText", nameDisp, hexDisp);
+
+    // Иконка Warning — для деструктивных случаев (кросс-девайс или полный сброс).
+    MessageBoxIcon icon = (warning->Length > 0 || emptyBackup)
+        ? MessageBoxIcon::Warning : MessageBoxIcon::Question;
 
     if (MessageBox::Show(this, msg, Localization::T(L"restore.confirmTitle"),
-            MessageBoxButtons::OKCancel,
-            warning->Length > 0 ? MessageBoxIcon::Warning : MessageBoxIcon::Question)
+            MessageBoxButtons::OKCancel, icon)
         != System::Windows::Forms::DialogResult::OK)
         return;
 
@@ -1326,6 +1348,15 @@ void MainForm::PopulateNamesGrids(const DeviceData& data)
         dataGridButtons->Rows[row]->Cells[0]->Value = e.index;
         dataGridButtons->Rows[row]->Cells[1]->Value = gcnew String(e.name.c_str());
     }
+
+    // Нет именованных осей/кнопок (у устройства нет подразделов Axes\N\@ /
+    // Buttons\N\@) — показываем поясняющую заглушку вместо пустых сеток.
+    const bool empty = data.axes.empty() && data.buttons.empty();
+    if (labelAxesEmpty != nullptr) {
+        labelAxesEmpty->Visible = empty;
+        labelAxesEmpty->BringToFront();
+    }
+    layoutAxesTab->Visible = !empty;
 }
 
 // Рекурсивно переносит нативный InspectorNode в дерево TreeView.

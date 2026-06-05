@@ -328,6 +328,14 @@
     <value>OEMName отсутствует в бэкапе и будет УДАЛЁН из устройства.
 </value>
   </data>
+  <data name="restore.emptyBackupHeader" xml:space="preserve">
+    <value>Выбранный бэкап ПУСТОЙ (в нём нет ни OEMData, ни OEMName). Восстановление СБРОСИТ устройство к заводскому/пустому состоянию — оба значения будут удалены из реестра.
+
+</value>
+  </data>
+  <data name="restore.valueMissing" xml:space="preserve">
+    <value>(нет в бэкапе — будет удалено)</value>
+  </data>
   <data name="restore.invalidLength" xml:space="preserve">
     <value>Некорректная длина OEMData в файле: {0} байт. Допустимо 8 или 112 байт (возможно, hex-данные повреждены при ручном редактировании).</value>
   </data>
@@ -532,6 +540,14 @@
   </data>
   <data name="axes.gridHeader" xml:space="preserve">
     <value>Оси</value>
+  </data>
+  <data name="axes.emptyHint" xml:space="preserve">
+    <value>У этого устройства нет именованных осей и кнопок в реестре
+(подразделов Axes\N\@ и Buttons\N\@).
+
+Это нормально: у большинства устройств их нет — имена осей и кнопок
+берутся напрямую из HID-дескриптора, а не из реестра.
+Переименовывать здесь нечего.</value>
   </data>
   <data name="buttons.gridHeader" xml:space="preserve">
     <value>Кнопки</value>

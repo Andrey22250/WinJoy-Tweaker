@@ -42,6 +42,18 @@ namespace WinJoytweaker {
             toolTipOemName->InitialDelay = 400;
             toolTipOemName->ReshowDelay  = 200;
 
+            // Заглушка для пустой вкладки «Оси и кнопки»: центрированный текст
+            // вместо пустых сеток, когда у устройства нет именованных осей/кнопок.
+            // Создаётся в коде (не в дизайнере), Text задаётся в ApplyLocalization,
+            // видимость переключается в PopulateNamesGrids.
+            labelAxesEmpty = (gcnew System::Windows::Forms::Label());
+            labelAxesEmpty->Dock = System::Windows::Forms::DockStyle::Fill;
+            labelAxesEmpty->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
+            labelAxesEmpty->ForeColor = System::Drawing::Color::FromArgb(160, 160, 160);
+            labelAxesEmpty->BackColor = System::Drawing::Color::Transparent;
+            labelAxesEmpty->Visible = false;
+            tabPageAxes->Controls->Add(labelAxesEmpty);
+
             // Заполняем переключатель языка и выставляем сохранённое значение
             // ДО подписки на handler, чтобы инициализация не триггерила его.
             comboBoxLanguage->Items->Add(L"Auto / Авто");
@@ -172,6 +184,9 @@ namespace WinJoytweaker {
 
         // Вкладка «Оси и кнопки»
         System::Windows::Forms::TableLayoutPanel^   layoutAxesTab;
+        // Подпись-заглушка для пустой вкладки (нет именованных осей/кнопок).
+        // Создаётся в рантайме (не в конструкторе VS), поэтому не в InitializeComponent.
+        System::Windows::Forms::Label^              labelAxesEmpty;
         System::Windows::Forms::Label^              labelAxesGridHeader;
         System::Windows::Forms::Label^              labelButtonsGridHeader;
         System::Windows::Forms::DataGridView^                dataGridAxes;

@@ -328,6 +328,14 @@ OEMData bytes: {1}</value>
     <value>OEMName is absent from the backup and will be DELETED from the device.
 </value>
   </data>
+  <data name="restore.emptyBackupHeader" xml:space="preserve">
+    <value>The selected backup is EMPTY (it has neither OEMData nor OEMName). Restoring will RESET the device to a clean/factory state — both values will be removed from the registry.
+
+</value>
+  </data>
+  <data name="restore.valueMissing" xml:space="preserve">
+    <value>(absent in backup — will be removed)</value>
+  </data>
   <data name="restore.invalidLength" xml:space="preserve">
     <value>Invalid OEMData length in file: {0} bytes. Allowed values are 8 or 112 bytes (the hex data may be corrupted by manual editing).</value>
   </data>
@@ -532,6 +540,14 @@ The device must be connected for detailed info.</value>
   </data>
   <data name="axes.gridHeader" xml:space="preserve">
     <value>Axes</value>
+  </data>
+  <data name="axes.emptyHint" xml:space="preserve">
+    <value>This device has no named axes or buttons in the registry
+(no Axes\N\@ or Buttons\N\@ subkeys).
+
+That's normal: most devices don't have them — axis and button names
+come straight from the HID descriptor, not the registry.
+There is nothing to rename here.</value>
   </data>
   <data name="buttons.gridHeader" xml:space="preserve">
     <value>Buttons</value>
