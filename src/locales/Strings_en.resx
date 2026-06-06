@@ -431,6 +431,9 @@ After creation you can edit and apply them.</value>
   <data name="tooltip.povPoll" xml:space="preserve">
     <value>POV is polled by the driver rather than read via events.</value>
   </data>
+  <data name="tooltip.axesHeader" xml:space="preserve">
+    <value>Axes and device type are independent dwFlags bits: any axis can be enabled for any type. But for modern USB/HID devices games read the real axis list from the device itself (HID descriptor), while the registry mainly affects legacy winmm games. So changing axes here may have no effect in DirectInput games.</value>
+  </data>
   <data name="tooltip.xAxis" xml:space="preserve">
     <value>X axis source (J1/J2 gameport model). Read mainly by legacy winmm; usually has no effect on modern DirectInput devices.</value>
   </data>

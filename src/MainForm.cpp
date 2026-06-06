@@ -416,6 +416,11 @@ void MainForm::ApplyLocalization()
     toolTipOemName->SetToolTip(textBoxDwNumButtons, Localization::T(L"tooltip.numButtons"));
     toolTipOemName->SetToolTip(labelDwNumButtons,   Localization::T(L"tooltip.numButtons"));
 
+    // На заголовке «Доступные оси» и на самой группе — пояснение #5: оси и тип
+    // независимы, для HID-устройств биты дескриптивны (эффект не гарантирован).
+    toolTipOemName->SetToolTip(labelAxesHeader, Localization::T(L"tooltip.axesHeader"));
+    toolTipOemName->SetToolTip(groupBoxFlags,   Localization::T(L"tooltip.axesHeader"));
+
     toolTipOemName->SetToolTip(labelDeviceTypeHeader, Localization::T(L"tooltip.deviceType"));
     toolTipOemName->SetToolTip(radioGeneric, Localization::T(L"tooltip.deviceGeneric"));
     toolTipOemName->SetToolTip(radioYoke,    Localization::T(L"tooltip.deviceYoke"));

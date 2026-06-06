@@ -431,6 +431,9 @@
   <data name="tooltip.povPoll" xml:space="preserve">
     <value>POV опрашивается драйвером (poll), а не считывается событиями.</value>
   </data>
+  <data name="tooltip.axesHeader" xml:space="preserve">
+    <value>Оси и тип устройства — независимые биты dwFlags: включить можно любую ось любому типу. Но для современных USB/HID-устройств реальный список осей игра берёт из самого устройства (HID-дескриптор), а реестр влияет в основном на старые winmm-игры. Поэтому изменение осей здесь не гарантирует эффекта в DirectInput-играх.</value>
+  </data>
   <data name="tooltip.xAxis" xml:space="preserve">
     <value>Источник оси X (модель геймпорта J1/J2). Читается в основном legacy winmm; на современные DirectInput-устройства обычно не влияет.</value>
   </data>
