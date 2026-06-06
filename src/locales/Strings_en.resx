@@ -449,6 +449,9 @@ After creation you can edit and apply them.</value>
   <data name="common.noDataPlaceholder" xml:space="preserve">
     <value>—</value>
   </data>
+  <data name="common.infoGlyph" xml:space="preserve">
+    <value>ⓘ</value>
+  </data>
   <data name="tab.oemData" xml:space="preserve">
     <value>OEMData</value>
   </data>

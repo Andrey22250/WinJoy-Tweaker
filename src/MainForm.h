@@ -54,6 +54,12 @@ namespace WinJoytweaker {
             labelAxesEmpty->Visible = false;
             tabPageAxes->Controls->Add(labelAxesEmpty);
 
+            // Значок «ⓘ» у заголовка «Доступные оси» — курсор-подсказка сигналит,
+            // что по наведению есть пояснение. На сам groupBoxFlags курсор НЕ
+            // ставим: его унаследовали бы дочерние radio/checkbox (на них «?» был
+            // бы лишним) — там подсказка работает и так, по наведению.
+            labelAxesHeader->Cursor = System::Windows::Forms::Cursors::Help;
+
             // Заполняем переключатель языка и выставляем сохранённое значение
             // ДО подписки на handler, чтобы инициализация не триггерила его.
             comboBoxLanguage->Items->Add(L"Auto / Авто");
