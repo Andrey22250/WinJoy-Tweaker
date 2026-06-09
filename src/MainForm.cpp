@@ -710,6 +710,7 @@ void MainForm::LoadDeviceData()
         textBoxOemName->Text = String::Empty;
         ClearFlagControls();
         treeDeviceInfo->Nodes->Clear();
+        _pendingInfoKey = nullptr;
         return;
     }
 
@@ -725,8 +726,13 @@ void MainForm::LoadDeviceData()
     }
 
     // Вкладка «Информация» (DirectInput) не зависит от наличия OEMData —
-    // заполняем до возможного раннего выхода для устройств без OEMData.
-    PopulateDeviceInfo(sel->RegistryKey);
+    // помечаем до возможного раннего выхода для устройств без OEMData.
+    // Заполнение ленивое: опрос DirectInput и постройка дерева — операции не
+    // бесплатные, выполняем их только когда вкладка реально открыта (сразу,
+    // если она активна; иначе — при заходе, см. tabMain_SelectedIndexChanged).
+    _pendingInfoKey = sel->RegistryKey;
+    if (tabMain->SelectedTab == tabPageInfo)
+        FlushPendingDeviceInfo();
 
     textBoxOemName->Text = gcnew String(data.oemName.c_str());
 
@@ -1416,6 +1422,24 @@ void MainForm::PopulateDeviceInfo(System::String^ oemKey)
     }
 
     treeDeviceInfo->EndUpdate();
+}
+
+// Отложенное заполнение вкладки «Информация»: строит дерево для устройства,
+// запомненного в _pendingInfoKey, и помечает его актуальным. Если дерево уже
+// актуально (nullptr) — ничего не делает.
+void MainForm::FlushPendingDeviceInfo()
+{
+    if (_pendingInfoKey == nullptr) return;
+    PopulateDeviceInfo(_pendingInfoKey);
+    _pendingInfoKey = nullptr;
+}
+
+// Переключение вкладок: при заходе на «Информацию» достраиваем отложенное
+// дерево DirectInput (если устройство менялось, пока вкладка была закрыта).
+void MainForm::tabMain_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e)
+{
+    if (tabMain->SelectedTab == tabPageInfo)
+        FlushPendingDeviceInfo();
 }
 
 // Чтение состояния сетки в std::vector<NamedEntry>.

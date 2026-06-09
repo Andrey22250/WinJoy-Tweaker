@@ -32,6 +32,12 @@ namespace WinJoytweaker {
             // и не ломал дизайнер C++/CLI.
             SwapTabControlToFlat();
 
+            // Вкладка «Информация» заполняется лениво — при заходе на неё
+            // (опрос DirectInput не бесплатный, см. FlushPendingDeviceInfo).
+            // Подписка здесь, после подмены tabMain на FlatTabControl.
+            tabMain->SelectedIndexChanged += gcnew System::EventHandler(
+                this, &MainForm::tabMain_SelectedIndexChanged);
+
             // Поля сырых/предпросмотренных байт — только просмотр и копирование:
             // прячем каретку, убираем из Tab-обхода, вешаем контекстное меню.
             SetupReadOnlyDataFields();
@@ -208,6 +214,12 @@ namespace WinJoytweaker {
         // Снимок оригинальных байт OEMData — основа для предпросмотра изменений.
         array<System::Byte>^                       _oemDataSnapshot;
 
+        // Ключ устройства, для которого вкладка «Информация» ещё не построена.
+        // nullptr — дерево актуально. Заполняется в LoadDeviceData, гасится в
+        // FlushPendingDeviceInfo (ленивая загрузка: DirectInput опрашивается
+        // только когда вкладка реально открыта).
+        System::String^                            _pendingInfoKey;
+
         // Ключи устройств, для которых пользователь уже отказался создавать
         // стоковые параметры — чтобы не предлагать повторно в рамках сессии.
         System::Collections::Generic::List<System::String^>^ _declinedCreate;
@@ -277,6 +289,10 @@ namespace WinJoytweaker {
 
         // Вкладка «Информация» — дерево возможностей устройства (DirectInput).
         void PopulateDeviceInfo(System::String^ oemKey);
+        // Достраивает отложенное дерево «Информации», если устройство менялось,
+        // пока вкладка была закрыта (см. _pendingInfoKey).
+        void FlushPendingDeviceInfo();
+        void tabMain_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e);
 
         // Вкладка «Оси и кнопки».
         void PopulateNamesGrids(const DeviceData& data);
