@@ -19,6 +19,7 @@ namespace WinJoytweaker {
         property int BorderOverlay;
 
         FlatTabControl() { BorderOverlay = 6; }
+        ~FlatTabControl() { delete _overlayBrush; }
 
     protected:
         virtual void WndProc(System::Windows::Forms::Message% m) override
@@ -32,20 +33,27 @@ namespace WinJoytweaker {
                 System::Drawing::Color bg = (this->Parent != nullptr)
                     ? this->Parent->BackColor
                     : this->BackColor;
-                System::Drawing::SolidBrush^ br = gcnew System::Drawing::SolidBrush(bg);
-                try {
-                    int tabStripH = this->ItemSize.Height + 4;
-                    int w = this->ClientSize.Width;
-                    int h = this->ClientSize.Height;
-                    int t = BorderOverlay;
-                    g->FillRectangle(br, 0,     tabStripH, t, h - tabStripH);
-                    g->FillRectangle(br, w - t, tabStripH, t, h - tabStripH);
-                    g->FillRectangle(br, 0,     h - t,     w, t);
+                // Кисть кэшируется между перерисовками (WM_PAINT приходит при
+                // каждом переключении вкладки/перекрытии окна); пересоздаём её
+                // только если цвет фона родителя сменился.
+                if (_overlayBrush == nullptr || _overlayBrush->Color != bg) {
+                    delete _overlayBrush;
+                    _overlayBrush = gcnew System::Drawing::SolidBrush(bg);
                 }
-                finally { delete br; }
+                int tabStripH = this->ItemSize.Height + 4;
+                int w = this->ClientSize.Width;
+                int h = this->ClientSize.Height;
+                int t = BorderOverlay;
+                g->FillRectangle(_overlayBrush, 0,     tabStripH, t, h - tabStripH);
+                g->FillRectangle(_overlayBrush, w - t, tabStripH, t, h - tabStripH);
+                g->FillRectangle(_overlayBrush, 0,     h - t,     w, t);
             }
             finally { delete g; }
         }
+
+    private:
+        // Кэш кисти кромок; владеет ею контрол, освобождается в деструкторе.
+        System::Drawing::SolidBrush^ _overlayBrush;
     };
 
 }
