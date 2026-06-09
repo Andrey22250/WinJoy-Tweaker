@@ -363,9 +363,6 @@ void MainForm::ApplyLocalization()
     labelOemNameCaption->Text = Localization::T(L"label.oemNameCaption");
     labelOemDataCaption->Text = Localization::T(L"label.oemDataCaption");
     labelDwNumButtons->Text   = Localization::T(L"label.dwNumButtons");
-    // Значок «ⓘ» в заголовке группы и у «Доступные оси» — видимый намёк на
-    // подсказку (#5): при наведении объясняет независимость осей/типа и границу
-    // применимости для HID. Глиф берём из локализации (безопасная кодировка).
     String^ infoGlyph = L"  " + Localization::T(L"common.infoGlyph");
     groupBoxFlags->Text       = Localization::T(L"label.flagsGroup") + infoGlyph;
     labelDeviceTypeHeader->Text = Localization::T(L"label.deviceType");
