@@ -1,3 +1,0 @@
-// Application icon embedded into the .exe.
-// Windows shows the icon with the lowest resource ID in Explorer / taskbar.
-1 ICON "WinJoy Tweaker.ico"

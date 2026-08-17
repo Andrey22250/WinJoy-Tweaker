@@ -372,3 +372,11 @@ docs/
 Claude.md
 CLAUDE.md
 /docs/PROJECT_STATUS.md
+
+# Локальные конфиги и фильтры проекта
+.gitattributes
+app.rc
+src/app.config
+src/app.manifest
+WinJoy-tweaker.vcxproj
+WinJoy-tweaker.vcxproj.filters
