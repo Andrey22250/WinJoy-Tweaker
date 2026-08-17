@@ -14,7 +14,7 @@ It resolves compatibility issues between modern peripheral hardware and professi
 
 ---
 
-## ⚡ The Problem & The Solution
+##  The Problem & The Solution
 
 Many modern DirectInput controllers and custom DIY devices (based on SparkFun/Arduino) fail to be recognized properly by game engines due to non-standard axis mapping or missing Vendor/Product IDs in the games' hardcoded whitelists.
 
@@ -24,7 +24,7 @@ While using emulators (like x360ce or vJoy) solves the recognition issue, it int
 
 ---
 
-## 🛠 Key Features
+##  Key Features
 
 *   **Deep Axes Configuration:** Hide, add (Z, R, U, V, POV), and remap logical axes at the system level.
 *   **Device Type Override:** Force Windows to recognize your device as a Car Controller, Flight Yoke, or standard Gamepad.
@@ -35,7 +35,7 @@ While using emulators (like x360ce or vJoy) solves the recognition issue, it int
 
 ---
 
-## 📸 Screenshot
+##  Screenshot
 
 |<img src="images/photo_2026-08-18_01-58-07.jpg" width="400" alt="Main Tab">
 |:---:
@@ -43,7 +43,7 @@ While using emulators (like x360ce or vJoy) solves the recognition issue, it int
 
 ---
 
-## ⚙️ Under the Hood
+##  Under the Hood
 
 The project is implemented in **C++** utilizing a hybrid architecture:
 *   **Unmanaged C++:** Handles the core registry logic (`Advapi32.lib`) and `IDirectInput8W`. Deserialization of the `REG_BINARY` array is achieved by projecting the buffer onto the `JOYREGHWCONFIG` structure (based on the legacy DDK `mmddk.h` specifications). It also features a custom lexer and `.reg` file generator supporting UTF-16 LE, BOM, and Little-Endian hex strings.
