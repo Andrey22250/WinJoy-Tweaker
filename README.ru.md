@@ -56,7 +56,7 @@ WinJoy-Tweaker идёт другим путём — модифицирует б�
 Далее:
 
 ```bash
-git clone https://github.com/<владелец>/WinJoy-Tweaker.git
+git clone https://github.com/Andrey22250/WinJoy-Tweaker.git
 ```
 
 Откройте `WinJoy-tweaker.sln` и соберите проект в конфигурации `Release | x64`. Готовый `WinJoyTweaker.exe` окажется в `x64/Release`.
