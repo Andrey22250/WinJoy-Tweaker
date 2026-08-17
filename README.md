@@ -4,7 +4,7 @@
 ![Windows](https://img.shields.io/badge/Platform-Windows_10%2F11-0078D6?logo=windows)
 ![Win32 API](https://img.shields.io/badge/API-Win32_%7C_DirectInput-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-green)
-[![Release](https://img.shields.io/github/v/release/OWNER/WinJoy-Tweaker?color=orange)](../../releases/latest)
+[![Release](https://img.shields.io/github/v/release/Andrey22250/WinJoy-Tweaker?color=orange)](../../releases/latest)
 
 🇷🇺 [Читать на русском](README.ru.md)
 
