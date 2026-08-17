@@ -35,11 +35,11 @@ While using emulators (like x360ce or vJoy) solves the recognition issue, it int
 
 ---
 
-## 📸 Screenshots
+## 📸 Screenshot
 
-|<img src="docs/screenshots/main_tab.png" width="400" alt="Main Tab">|<img src="docs/screenshots/axes_tab.png" width="400" alt="Axes Tab">|
-|:---:|:---:|
-| *Basic flags configuration and axis mapping* | *Renaming logical axes and buttons* |
+|<img src="images/photo_2026-08-18_01-58-07.jpg" width="400" alt="Main Tab">
+|:---:
+| *Basic flags configuration and axis mapping* |
 
 ---
 
