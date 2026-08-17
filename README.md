@@ -68,7 +68,7 @@ You'll need **Visual Studio 2022** (or newer) with these workloads:
 Then:
 
 ```bash
-git clone https://github.com/<owner>/WinJoy-Tweaker.git
+git clone https://github.com/Andrey22250/WinJoy-Tweaker.git
 ```
 
 Open `WinJoy-tweaker.sln` and build in the `Release | x64` configuration. The resulting `WinJoyTweaker.exe` will be in `x64/Release`.
