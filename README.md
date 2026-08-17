@@ -1,4 +1,4 @@
-# 🎮 WinJoy-Tweaker
+# WinJoy-Tweaker
 
 ![C++](https://img.shields.io/badge/C%2B%2B-ISO_C%2B%2B-blue?logo=c%2B%2B)
 ![Windows](https://img.shields.io/badge/Platform-Windows_10%2F11-0078D6?logo=windows)
@@ -85,7 +85,3 @@ Open `WinJoy-tweaker.sln` and build in the `Release | x64` configuration. The re
 ## ⚠️ Disclaimer
 
 This program modifies the system registry (strictly within the `HKCU` hive). Despite the automatic backup mechanism, the author is not responsible for any peripheral malfunctions. In the event of a critical failure, simply remove your device via the Windows "Device Manager" and reconnect it to force Windows to rebuild the factory registry keys (Clean State).
-
----
-**Developed as part of a Bachelor's Thesis in Software Engineering.**  
-*Polzunov Altai State Technical University, 2026.*
